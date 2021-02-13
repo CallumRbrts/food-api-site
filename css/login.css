@@ -1,0 +1,110 @@
+* {
+  font-family: 'Helvetica';
+  margin: 0;
+  padding: 0;
+  font-weight: 400; }
+
+body, html {
+  overflow-x: hidden;
+  width: 100%;
+  min-height: 100vh;
+  text-align: center;
+  background: url("../geoffrey-ernault-thecontractlq.jpg") no-repeat center;
+  background-size: cover;
+}
+
+h1, h2 {
+  text-transform: uppercase;
+  font-weight: 400;
+  color: #f2f2f2;
+}
+h2 {
+  margin: 0 0 0 8px;
+}
+p{
+  color: #f2f2f2;
+  margin-top: 10px;
+}
+
+form {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 25px;
+  width: 20%;
+  align-items: center;
+  justify-content: center;
+  display: inline-block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) ;
+
+}
+.title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.info {
+  display: flex;
+  flex-direction: column;
+
+}
+input, select, textarea {
+  padding: 5px;
+  margin-bottom: 30px;
+  background: transparent;
+  border: none;
+  color: #F2F2F2;
+  border-bottom: 1px solid #eee;
+}
+input::placeholder {
+  color: #eee;
+}
+option:focus {
+  border: none;
+}
+option {
+    background: black;
+    border: none;
+}
+.checkbox input {
+    margin: 0 10px 0 0;
+    vertical-align: middle;
+}
+.checkbox a {
+  color: #1DB954;
+}
+.checkbox a:hover {
+  color: #00a573;
+}
+.btn-item, button {
+  padding: 10px 5px;
+  margin-top: 20px;
+  border-radius: 25px;
+  border: 2px solid #F2F2F2;
+  border: none;
+  background: #1DB954;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 400;
+}
+.btn-item {
+  display: inline-block;
+  margin: 20px 5px 0;
+  }
+button {
+  width: 100%;
+  font-size: 17px;
+}
+button:hover, .btn-item:hover {
+  background: #00a573;
+}
+@media (min-width: 568px) {
+  html, body {
+  height: 100%;
+  }
+.main-block {
+  flex-direction: row;
+  height: calc(100% - 50px);
+  }
+}

@@ -1,7 +1,12 @@
 var express = require('express');
 var app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8000;
 
+
+//app.use(__dirname+'/css', express.static('public'))
+
+//Use to load static files like css
+app.use(express.static(__dirname));
 //const MongoClient = require('mongodb').MongoClient;
 //const uri = "mongodb+srv://<user>:<passwd>@web-entreprise-systems.enfbr.mongodb.net/test?retryWrites=true&w=majority";
 
@@ -10,6 +15,7 @@ var port = PORT;
 app.get('/', function(req, res){
   res.sendFile(__dirname+'/index.html');
 });
+
 
 var adminRouter = express.Router();
 var basicRouter = express.Router();
@@ -44,6 +50,9 @@ adminRouter.get('/users/:name', function(req,res){
   res.send('Hello ' + req.params.name + '! Are you my little pogchamp?');
 });
 
+app.get( '/', function( req, res ) {
+  res.sendFile( path.join( __dirname, 'css', 'index.html' ));
+});
 
 app.use('/admin', adminRouter);
 app.use('/', basicRouter);
@@ -61,17 +70,17 @@ app.route('/login')
      }
      console.log('Start the database stuff');
      console.log('The Params: ' + input1 + " " + input2);
-     MongoClient.connect(uri, function(err, db){
-       if(err) throw err;
-       var dbo = db.db("test");
-       var myobj = { firstInput: input1, secondInput: input2 };
-       dbo.collection("users").insertOne(myobj, function(err, res) {
-         if (err) throw err;
-         console.log("1 user inserted");
-         db.close();
-       });
-       console.log('End of DB stuff');
-     });
+     // MongoClient.connect(uri, function(err, db){
+     //   if(err) throw err;
+     //   var dbo = db.db("test");
+     //   var myobj = { firstInput: input1, secondInput: input2 };
+     //   dbo.collection("users").insertOne(myobj, function(err, res) {
+     //     if (err) throw err;
+     //     console.log("1 user inserted");
+     //     db.close();
+     //   });
+     //   console.log('End of DB stuff');
+     // });
 
 })
   .post(function(req,res){
