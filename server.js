@@ -10,6 +10,16 @@ const PORT = process.env.PORT || 8080;
 
 //Use to load static files like css
 app.use(express.static(__dirname));
+
+
+//app.use(express.json())
+//since the content type of our form is set to x-www-form-urlencoded we need to add this
+app.use(express.urlencoded({
+  extended: true
+}));
+
+
+
 const MongoClient = require('mongodb').MongoClient;
 const uri = "mongodb+srv://"+user+":"+password+"@web-entreprise-systems.enfbr.mongodb.net/"+dbname+"?retryWrites=true&w=majority";
 
@@ -94,15 +104,15 @@ app.route('/login')
 app.route('/register')
   .get(function(req,res){
     res.sendFile(__dirname+'/register.html');
+
+
    })
    .post(function(req,res){
-     var username = req.query.username;
-     var email = req.query['email'];
-     var password = req.query.password
+     var username = req.body.username;
+     var email = ; req.body.email//another possibility req.params['email']
+     var password = req.body.password;
 
-
-
-     console.log(email);
+     console.log('The Register Params: ' + username + " " + email + " " + password);
      res.send('processing register form!');
    });
 
