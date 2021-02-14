@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/CallumRbrts/food-api-site#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "express-validator": "^6.9.2",
+    "mongodb": "^3.6.4"
   }
 }
