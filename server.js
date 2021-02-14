@@ -2,7 +2,8 @@ var express = require('express');
 var app = express();
 const expressValidator = require('express-validator');
 var {user, password, dbname} = require('./config.json');
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8000;
+
 
 
 
@@ -82,19 +83,19 @@ app.route('/login')
      //    output+=('There was input: ' + input1 + ' and ' + input2);
      //    res.send(output);
      // }
-     console.log('Start the database stuff');
-     console.log('The Params: ' + username + " " + email + " " + password);
-     MongoClient.connect(uri, function(err, db){
-       if(err) throw err;
-       var dbo = db.db(dbname);
-       var myobj = { username: username, email: email, password: password };
-       dbo.collection("users").insertOne(myobj, function(err, res) {
-         if (err) throw err;
-         console.log("1 user inserted");
-         db.close();
-       });
-       console.log('End of DB stuff');
-     });
+     // console.log('Start the database stuff');
+     // console.log('The Params: ' + username + " " + email + " " + password);
+     // MongoClient.connect(uri, function(err, db){
+     //   if(err) throw err;
+     //   var dbo = db.db(dbname);
+     //   var myobj = { username: username, email: email, password: password };
+     //   dbo.collection("users").insertOne(myobj, function(err, res) {
+     //     if (err) throw err;
+     //     console.log("1 user inserted");
+     //     db.close();
+     //   });
+     //   console.log('End of DB stuff');
+     // });
 })
   .post(function(req,res){
     console.log('processing');
@@ -109,13 +110,64 @@ app.route('/register')
    })
    .post(function(req,res){
      var username = req.body.username;
-     var email = ; req.body.email//another possibility req.params['email']
+     var email =  req.body.email;//another possibility req.params['email']
      var password = req.body.password;
+     MongoClient.connect(uri, async function(err, db){
+      if(err) throw err;
+      var dbo = db.db(dbname);
+      var users = dbo.collection("users");
+      var existingUser = users.find({ email: email });
+      const allValues = await existingUser.toArray();
+      console.log(allValues);
+      if(allValues.length > 0){
+        console.log('User Exists');
+        db.close();
+        res.redirect('/register');
+
+
+      }else {
+        console.log("User Doesn't Exist");
+        var myobj = { username: username, email: email, password: password };
+        dbo.collection("users").insertOne(myobj, function(err, res) {
+          if (err) throw err;
+          console.log("1 user inserted");
+        });
+        db.close();
+        res.redirect('/login');
+      }
+
+
+
+      // console.log(existingUser);
+      //  if(existingUser == true){
+      //    var myobj = { username: username, email: email, password: password };
+      //    dbo.collection("users").insertOne(myobj, function(err, res) {
+      //      if (err) throw err;
+      //      console.log("1 user inserted");
+      //      db.close();
+      //    });
+      //  }
+
+       // if(!existingUser){
+       //    console.log("User already Exists");
+       // }else {
+       //   console.log("User doesn't exist");
+       // }
+       // console.log(existingUser);
+      // db.close();
+     });
+
 
      console.log('The Register Params: ' + username + " " + email + " " + password);
-     res.send('processing register form!');
+     //res.send('processing register form!');
    });
 
+function addToDB(dbo, myobj, collection) {
+    dbo.collection(collection).insertOne(myobj, function(err, res) {
+      if (err) throw err;
+      console.log("1 user inserted");
+    });
+}
 
 app.listen(PORT);
 console.log('Express server running at http://127.0.0.1:'+PORT+'/');
