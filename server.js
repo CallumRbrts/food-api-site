@@ -1,7 +1,9 @@
 var express = require('express');
+const cookieParser = require('cookie-parser');
 var app = express();
 const expressValidator = require('express-validator');
-var {user, password, dbname} = require('./config.json');
+const jwtAuth = require('./js/jwtAuth.js');
+var {user, password, dbname, secretKey} = require('./config.json');
 const PORT = process.env.PORT || 8000;
 
 
@@ -11,7 +13,7 @@ const PORT = process.env.PORT || 8000;
 
 //Use to load static files like css
 app.use(express.static(__dirname));
-
+app.use(cookieParser());
 
 //app.use(express.json())
 //since the content type of our form is set to x-www-form-urlencoded we need to add this
@@ -52,8 +54,10 @@ adminRouter.param('name', function(req,res,next,name){
   next();
 });
 
-basicRouter.get('/cookbook', function(req, res){
-  res.sendFile(__dirname+'/cookbook.html')
+basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
+  //var token = req.cookies["x-access-token"];
+  //console.log(token);
+  //res.sendFile(__dirname+'/cookbook.html')
 });
 
 adminRouter.get('/users', function(req,res){
@@ -76,30 +80,52 @@ app.route('/login')
   .get(function(req,res){
     res.sendFile(__dirname+'/login.html');
       var output = 'getting the login! ';
-      var username = req.query.username;
-      var email = req.query['email'];
-      var password = req.query.password
-     //  if (typeof input1 != 'undefined' && typeof input2 != 'undefined') {
-     //    output+=('There was input: ' + input1 + ' and ' + input2);
-     //    res.send(output);
-     // }
-     // console.log('Start the database stuff');
-     // console.log('The Params: ' + username + " " + email + " " + password);
-     // MongoClient.connect(uri, function(err, db){
-     //   if(err) throw err;
-     //   var dbo = db.db(dbname);
-     //   var myobj = { username: username, email: email, password: password };
-     //   dbo.collection("users").insertOne(myobj, function(err, res) {
-     //     if (err) throw err;
-     //     console.log("1 user inserted");
-     //     db.close();
-     //   });
-     //   console.log('End of DB stuff');
-     // });
 })
   .post(function(req,res){
     console.log('processing');
-    res.send('processing login form!');
+    var email = req.body.email;
+    var password = req.body.password;
+
+    MongoClient.connect(uri, async function(err, db){
+      if(err) throw err;
+      var dbo = db.db(dbname);
+      var users = dbo.collection("users");
+      var existingUser = users.find({ email: email, password: password});
+      //var existingUser = users.find({$and:[{email: email},{password:password}]});
+
+      const allUsers = await existingUser.toArray();
+      console.log(allUsers);
+      if (allUsers.length > 0) {
+        console.log('Login Successful');
+        // var token = jwt.sign({ id: allUsers[0]._id }, secretKey, {
+        //   expiresIn: 86400 // 24 hours
+        // });
+        token = jwtAuth.createToken(allUsers[0]);
+        db.close();
+        console.log({
+          id: allUsers[0]._id,
+          username: allUsers[0].username,
+          email: allUsers[0].email,
+          accessToken: token
+        });
+        res.cookie('x-access-token',token)
+        //res.clearCookie('x-access-token')
+        res.redirect('/cookbook');
+        // res.status(200).send({
+        //   id: allUsers[0]._id,
+        //   username: allUsers[0].username,
+        //   email: allUsers[0].email,
+        //   accessToken: token
+        // });
+      //  res.status(200).send({ message: "Login Successful" });
+
+      }else{
+        console.log('Username already taken');
+        db.close();
+        res.status(400).send({ message: "Invalid Login Details" });
+      }
+
+    });
 });
 
 app.route('/register')
@@ -116,16 +142,25 @@ app.route('/register')
       if(err) throw err;
       var dbo = db.db(dbname);
       var users = dbo.collection("users");
-      var existingUser = users.find({ email: email });
-      const allValues = await existingUser.toArray();
-      console.log(allValues);
-      if(allValues.length > 0){
-        console.log('User Exists');
+      var existingUsername = users.find({ username: username });
+      var existingEmail = users.find({ email: email });
+      const allEmails = await existingEmail.toArray();
+      const allUsernames = await existingUsername.toArray();
+      console.log(allEmails);
+      console.log(allUsernames);
+      if(allEmails.length > 0){
+        console.log('Email in use');
         db.close();
-        res.redirect('/register');
+        res.status(400).send({ message: "Failed! Email is already in use!" });
+        //res.redirect('/register');
 
 
-      }else {
+      } else if (allUsernames.length > 0) {
+        console.log('Username already taken');
+        db.close();
+        res.status(400).send({ message: "Failed! Username is already in use!" });
+
+      } else {
         console.log("User Doesn't Exist");
         var myobj = { username: username, email: email, password: password };
         dbo.collection("users").insertOne(myobj, function(err, res) {

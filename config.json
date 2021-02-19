@@ -1,5 +1,6 @@
 {
 	"user": "test-user",
 	"password": "9bxjdvko3efZs4Fl",
-	"dbname": "food-site-db"
+	"dbname": "food-site-db",
+	"secretKey": "not-sure-if-i-should-be-making-this-up"
 }

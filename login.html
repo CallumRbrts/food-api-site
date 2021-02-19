@@ -5,6 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link rel="stylesheet" type="text/css" href="css/login.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script>
+      var req;
+      function makeRequest() {
+        if (window.XMLHttpRequest) {
+            req = new XMLHttpRequest();
+        }
+        else if (window.ActiveXObject) {
+            req = new ActiveXObject("Msxml2.XMLHTTP");
+        }
+        else {
+          // Ajax not supported
+          return;
+        }
+        req.onreadystatechange = function() {
+        var txt = "";
+        if (this.readyState == 4 && this.status == 200) {
+          var response = this.responseText;
+          console.log (response);
+         document.getElementById("answer").innerHTML = response;
+        }
+      };
+    }
+      function doStuff() {
+        email = document.getElementById("email").value;
+        password = document.getElementById("password").value;
+
+
+        // req.open("GET", "/register?username=" + username + "&email=" + email + "&password=" + password, true);
+        // req.send();
+
+        var params = 'email=' + email + '&password=' + password;
+        req.open('POST', "/login?", true);
+        req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        req.send(params);
+
+      }
+    </script>
   </head>
   <body id="body">
    <!-- <?php
@@ -12,16 +50,16 @@
     ?> -->
     <!-- Need to make a php file for the header to work-->
     <div class="form">
-      <form action="/">
-        <div class="title">
+      <form method="post" action="/login">
+        <div  class="title">
           <i class="fas fa-pencil-alt"></i>
           <h2>Login here</h2>
         </div>
         <div class="info">
-          <input type="text" name="name" placeholder="Email">
-          <input type="password" name="name" placeholder="Password">
+          <input id="email" type="text" name="email" placeholder="Email">
+          <input id="password" type="password" name="password" placeholder="Password">
         </div>
-        <button type="submit" href="/">Submit</button>
+        <button type="submit" id="submit" onclick="doStuff();" >Submit</button>
         <p> or register <a href="/register">here</a> </p>
       </form>
     </div>
