@@ -2,10 +2,16 @@ var express = require('express');
 const cookieParser = require('cookie-parser');
 var unirest = require("unirest");
 var app = express();
+const mongoManager = require('./js/mongoManager.js')
 const expressValidator = require('express-validator');
+const schedule = require('node-schedule');
 const jwtAuth = require('./js/jwtAuth.js');
+const MongoClient = require('mongodb').MongoClient;
 var {user, password, dbname, secretKey, apiKey} = require('./config.json');
 const PORT = process.env.PORT || 8000;
+const uri = "mongodb+srv://"+user+":"+password+"@web-entreprise-systems.enfbr.mongodb.net/"+dbname+"?retryWrites=true&w=majority";
+var port = PORT;
+
 
 //app.use(__dirname+'/css', express.static('public'))
 
@@ -21,32 +27,27 @@ app.use(express.urlencoded({
 }));
 
 
-
-const MongoClient = require('mongodb').MongoClient;
-const uri = "mongodb+srv://"+user+":"+password+"@web-entreprise-systems.enfbr.mongodb.net/"+dbname+"?retryWrites=true&w=majority";
-
-var port = PORT;
-
 // app.get('/', function(req, res){
 //   res.render(__dirname+'/index.html');
 // });
 
 app.route('/')
   .get(function (req,res){
-    // var j = schedule.scheduleJob({hour: 00, minute: 00}, function(){
-    //
-    // });
-    let url = "https://api.spoonacular.com/recipes/random";
-    var request = unirest("GET", url);
-    request.query({
-      "apiKey": apiKey,
-	    "number": 2,
-      "includeNutrition": true
-    });
+    var j = schedule.scheduleJob({hour: 00, minute: 00}, function(){
+      mongoManager.emptyCollection("dailyRecipes");
+      let url = "https://api.spoonacular.com/recipes/random";
+      var request = unirest("GET", url);
+      request.query({
+        "apiKey": apiKey,
+  	    "number": 2,
+        "includeNutrition": true
+      });
 
-    request.end(function(res) {
-	     if (res.error) throw new Error(res.error);
-	     console.log(res.body);
+      request.end(function(res) {
+  	     if (res.error) throw new Error(res.error);
+  	     console.log(res.body.recipes);
+         mongoManager.addToDB("dailyRecipes", res.body.recipes)
+      });
     });
 
 
