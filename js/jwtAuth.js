@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 var {user,password,dname,secretKey} = require("../config.json");
 
 module.exports = {
-  verifyToken: function(req, res){
+  verifyToken: function(req, res, next){
     let token = req.cookies["x-access-token"];
     console.log(token);
     if (!token) {
@@ -14,7 +14,8 @@ module.exports = {
       return res.status(401).send({ message: "Unauthorized!" });
     }
     req.userId = decoded.id;
-    res.sendFile(__dirname+'/cookbook.html')
+    next();
+    //res.sendFile(__dirname+'/cookbook.html')
 
   });
 },

@@ -2,5 +2,6 @@
 	"user": "test-user",
 	"password": "9bxjdvko3efZs4Fl",
 	"dbname": "food-site-db",
-	"secretKey": "not-sure-if-i-should-be-making-this-up"
+	"secretKey": "not-sure-if-i-should-be-making-this-up",
+	"apiKey": "082b609e0d374c5ebfa9225c2cab1cdd"
 }

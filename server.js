@@ -1,19 +1,18 @@
 var express = require('express');
 const cookieParser = require('cookie-parser');
+var unirest = require("unirest");
 var app = express();
 const expressValidator = require('express-validator');
 const jwtAuth = require('./js/jwtAuth.js');
-var {user, password, dbname, secretKey} = require('./config.json');
+var {user, password, dbname, secretKey, apiKey} = require('./config.json');
 const PORT = process.env.PORT || 8000;
-
-
-
 
 //app.use(__dirname+'/css', express.static('public'))
 
 //Use to load static files like css
 app.use(express.static(__dirname));
 app.use(cookieParser());
+app.set('view engine', 'ejs');
 
 //app.use(express.json())
 //since the content type of our form is set to x-www-form-urlencoded we need to add this
@@ -28,9 +27,31 @@ const uri = "mongodb+srv://"+user+":"+password+"@web-entreprise-systems.enfbr.mo
 
 var port = PORT;
 
-app.get('/', function(req, res){
-  res.sendFile(__dirname+'/index.html');
-});
+// app.get('/', function(req, res){
+//   res.render(__dirname+'/index.html');
+// });
+
+app.route('/')
+  .get(function (req,res){
+    // var j = schedule.scheduleJob({hour: 00, minute: 00}, function(){
+    //
+    // });
+    let url = "https://api.spoonacular.com/recipes/random";
+    var request = unirest("GET", url);
+    request.query({
+      "apiKey": apiKey,
+	    "number": 2,
+      "includeNutrition": true
+    });
+
+    request.end(function(res) {
+	     if (res.error) throw new Error(res.error);
+	     console.log(res.body);
+    });
+
+
+    res.render(__dirname+'/index.ejs');
+  });
 
 
 var adminRouter = express.Router();
@@ -57,7 +78,7 @@ adminRouter.param('name', function(req,res,next,name){
 basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
   //var token = req.cookies["x-access-token"];
   //console.log(token);
-  //res.sendFile(__dirname+'/cookbook.html')
+  res.sendFile(__dirname+'/cookbook.html')
 });
 
 adminRouter.get('/users', function(req,res){
@@ -111,13 +132,6 @@ app.route('/login')
         res.cookie('x-access-token',token)
         //res.clearCookie('x-access-token')
         res.redirect('/cookbook');
-        // res.status(200).send({
-        //   id: allUsers[0]._id,
-        //   username: allUsers[0].username,
-        //   email: allUsers[0].email,
-        //   accessToken: token
-        // });
-      //  res.status(200).send({ message: "Login Successful" });
 
       }else{
         console.log('Username already taken');
@@ -131,8 +145,6 @@ app.route('/login')
 app.route('/register')
   .get(function(req,res){
     res.sendFile(__dirname+'/register.html');
-
-
    })
    .post(function(req,res){
      var username = req.body.username;
@@ -170,26 +182,6 @@ app.route('/register')
         db.close();
         res.redirect('/login');
       }
-
-
-
-      // console.log(existingUser);
-      //  if(existingUser == true){
-      //    var myobj = { username: username, email: email, password: password };
-      //    dbo.collection("users").insertOne(myobj, function(err, res) {
-      //      if (err) throw err;
-      //      console.log("1 user inserted");
-      //      db.close();
-      //    });
-      //  }
-
-       // if(!existingUser){
-       //    console.log("User already Exists");
-       // }else {
-       //   console.log("User doesn't exist");
-       // }
-       // console.log(existingUser);
-      // db.close();
      });
 
 
