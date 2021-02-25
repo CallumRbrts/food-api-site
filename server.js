@@ -1,9 +1,11 @@
 var express = require('express');
+const flash = require('connect-flash');
 const cookieParser = require('cookie-parser');
 var unirest = require("unirest");
 var app = express();
-const mongoManager = require('./js/mongoManager.js')
+const mongoManager = require('./js/mongoManager.js');
 const expressValidator = require('express-validator');
+var session = require('express-session');
 const schedule = require('node-schedule');
 const jwtAuth = require('./js/jwtAuth.js');
 const MongoClient = require('mongodb').MongoClient;
@@ -18,7 +20,16 @@ var port = PORT;
 //Use to load static files like css
 app.use(express.static(__dirname));
 app.use(cookieParser());
+app.use(session({
+  name: 'session',
+  resave: true,
+  saveUninitialized: true,
+  secret: secretKey,
+ }));
+app.use(flash());
 app.set('view engine', 'ejs');
+
+
 
 //app.use(express.json())
 //since the content type of our form is set to x-www-form-urlencoded we need to add this
@@ -33,6 +44,17 @@ app.use(express.urlencoded({
 
 app.route('/')
   .get(function (req,res){
+    if(req.session.page_views){
+     req.session.page_views++;
+     console.log("You visited this page " + req.session.page_views + " times");
+   }else{
+     req.session.page_views = 1;
+     console.log("Welcome to this page for the first time!");
+   }
+    // respond with the session object
+    console.log(req.session);
+
+
     var j = schedule.scheduleJob({hour: 00, minute: 00}, function(){
       mongoManager.emptyCollection("dailyRecipes");
       let url = "https://api.spoonacular.com/recipes/random";
@@ -79,6 +101,7 @@ adminRouter.param('name', function(req,res,next,name){
 basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
   //var token = req.cookies["x-access-token"];
   //console.log(token);
+
   res.sendFile(__dirname+'/cookbook.html')
 });
 
@@ -101,6 +124,7 @@ app.use('/', basicRouter);
 app.route('/login')
   .get(function(req,res){
     res.sendFile(__dirname+'/login.html');
+
       var output = 'getting the login! ';
 })
   .post(function(req,res){
@@ -130,8 +154,16 @@ app.route('/login')
           email: allUsers[0].email,
           accessToken: token
         });
-        res.cookie('x-access-token',token)
+        //Attempting to use session instead of cookies - Both seem to work
+        //I have decided to try and use session instead of cookies as they are safer
+        //Session is safer for storing user data because it can not be modified by the end-user and
+        //can only be set on the server-side.
+        //Cookies on the other hand can be hijacked because they are just stored on the browser
+        
+        //res.cookie('x-access-token',token);
         //res.clearCookie('x-access-token')
+        req.session.x_access_token = token;
+
         res.redirect('/cookbook');
 
       }else{
