@@ -26,6 +26,18 @@ module.exports = {
       });
       db.close();
     });
+  },
+  getFromDB: async function(collection, callback){
+    MongoClient.connect(uri, async function(err, db){
+      if(err) throw err;
+      var dbo = db.db(dbname);
+      var users = dbo.collection(collection);
+      var elem = dbo.collection(collection).find();
+      var elem_array = await elem.toArray();
+      console.log("Collected " + elem_array.length + " recipes");
+      db.close();
+      return callback(elem_array);
+    });
 
   }
 }

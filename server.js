@@ -54,14 +54,14 @@ app.route('/')
     // respond with the session object
     console.log(req.session);
 
-
+    //check if collected recipe has an image, if not either use a default image or run another recipe with an image
     var j = schedule.scheduleJob({hour: 00, minute: 00}, function(){
       mongoManager.emptyCollection("dailyRecipes");
       let url = "https://api.spoonacular.com/recipes/random";
       var request = unirest("GET", url);
       request.query({
         "apiKey": apiKey,
-  	    "number": 2,
+  	    "number": 6,
         "includeNutrition": true
       });
 
@@ -73,7 +73,31 @@ app.route('/')
     });
 
 
-    res.render(__dirname+'/index.ejs');
+    //result of get is return through a callback, so I need to do the dynamic html in the callback (variable can't be passed up due to async)
+    mongoManager.getFromDB("dailyRecipes", function(result){
+      console.log(result);
+      var recipes = [];
+
+
+      for (let i = 0; i < result.length; ++i){
+        var tagline = '<div class="col-md-6 col-lg-4 mb-5"><div class="portfolio-item mx-auto" data-toggle="modal" data-target="#portfolioModal1"><div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100"><div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div></div><img class="img-fluid" src="'+result[i].image+'" alt="" /></div></div>';
+        recipes.push(tagline);
+      }
+
+      console.log(recipes);
+
+      res.render(__dirname+'/index.ejs',{
+        recipes: recipes
+      });
+
+    });
+
+    //console.log(recipes);
+
+
+    //const tagline = '<div class="col-md-6 col-lg-4 mb-5"><div class="portfolio-item mx-auto" data-toggle="modal" data-target="#portfolioModal1"><div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100"><div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div></div><img class="img-fluid" src="assets/img/portfolio/cabin.png" alt="" /></div></div>';
+
+
   });
 
 
@@ -159,7 +183,7 @@ app.route('/login')
         //Session is safer for storing user data because it can not be modified by the end-user and
         //can only be set on the server-side.
         //Cookies on the other hand can be hijacked because they are just stored on the browser
-        
+
         //res.cookie('x-access-token',token);
         //res.clearCookie('x-access-token')
         req.session.x_access_token = token;
