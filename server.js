@@ -19,7 +19,7 @@ var port = PORT;
 
 
 //check if collected recipe has an image, if not either use a default image or run another recipe with an image
-var j = schedule.scheduleJob({hour: 00, minute: 00}, async function(){
+var j = schedule.scheduleJob({hour: 14, minute: 24}, async function(){
   console.log("Running Scheduled Job");
   await mongoManager.emptyCollection("dailyRecipes");
   let url = "https://api.spoonacular.com/recipes/random";
