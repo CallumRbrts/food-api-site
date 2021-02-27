@@ -3,16 +3,55 @@ const flash = require('connect-flash');
 const cookieParser = require('cookie-parser');
 var unirest = require("unirest");
 var app = express();
+var {user, password, dbname, secretKey, apiKey, searchAPIkey} = require('./config.json');
+const imageSearch = require('image-search-google');
+const client = new imageSearch('92bdea160fd4dc820', searchAPIkey);
+const options = {page:1};
 const mongoManager = require('./js/mongoManager.js');
 const expressValidator = require('express-validator');
 var session = require('express-session');
 const schedule = require('node-schedule');
 const jwtAuth = require('./js/jwtAuth.js');
 const MongoClient = require('mongodb').MongoClient;
-var {user, password, dbname, secretKey, apiKey} = require('./config.json');
 const PORT = process.env.PORT || 8000;
 const uri = "mongodb+srv://"+user+":"+password+"@web-entreprise-systems.enfbr.mongodb.net/"+dbname+"?retryWrites=true&w=majority";
 var port = PORT;
+
+
+//check if collected recipe has an image, if not either use a default image or run another recipe with an image
+var j = schedule.scheduleJob({hour: 00, minute: 00}, async function(){
+  console.log("Running Scheduled Job");
+  await mongoManager.emptyCollection("dailyRecipes");
+  let url = "https://api.spoonacular.com/recipes/random";
+  var request = unirest("GET", url);
+  request.query({
+    "apiKey": apiKey,
+    "number": 6,
+    "includeNutrition": true
+  });
+
+  request.end(async function(res) {
+     if (res.error) throw new Error(res.error);
+     //console.log(res.body.recipes);
+
+     for (var y = 0; y < res.body.recipes.length; ++y){
+       var recipe = res.body.recipes[y];
+
+       if(!("image" in recipe)){
+         new_images = await client.search(recipe.title, options)
+             .catch(error => console.log(error));
+        try{
+          recipe.image = new_images[0].url;
+        }
+        catch(err){
+          console.log("image not found");
+          recipe.image = "";
+        }
+      }
+    }
+     mongoManager.addToDB("dailyRecipes", res.body.recipes)
+  });
+});
 
 
 //app.use(__dirname+'/css', express.static('public'))
@@ -54,23 +93,7 @@ app.route('/')
     // respond with the session object
     console.log(req.session);
 
-    //check if collected recipe has an image, if not either use a default image or run another recipe with an image
-    var j = schedule.scheduleJob({hour: 00, minute: 00}, function(){
-      mongoManager.emptyCollection("dailyRecipes");
-      let url = "https://api.spoonacular.com/recipes/random";
-      var request = unirest("GET", url);
-      request.query({
-        "apiKey": apiKey,
-  	    "number": 6,
-        "includeNutrition": true
-      });
 
-      request.end(function(res) {
-  	     if (res.error) throw new Error(res.error);
-  	     console.log(res.body.recipes);
-         mongoManager.addToDB("dailyRecipes", res.body.recipes)
-      });
-    });
 
 
     //result of get is return through a callback, so I need to do the dynamic html in the callback (variable can't be passed up due to async)
