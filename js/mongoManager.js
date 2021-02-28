@@ -10,7 +10,12 @@ module.exports = {
       var users = dbo.collection(collection);
       dbo.collection(collection).insert(myobj, function(err, res){
         if (err) throw err;
-        console.log(myobj.length + " recipe(s) inserted");
+        if (myobj.length == undefined) {
+          console.log(1 + " recipe inserted");
+        }
+        else{
+          console.log(myobj.length + " recipe(s) inserted");
+        }
       });
       db.close();
     });
@@ -37,6 +42,20 @@ module.exports = {
       console.log("Collected " + elem_array.length + " recipes");
       db.close();
       return callback(elem_array);
+    });
+  },
+  searchDB: async function(collection, id, callback){
+    MongoClient.connect(uri, async function(err, db){
+      if(err) throw err;
+      var dbo = db.db(dbname);
+      var elem = await dbo.collection(collection).findOne({id: id})
+      console.log(elem);
+      db.close();
+      if (elem == null) {
+        return callback(false);
+      }else{
+        return callback(true);
+      }
     });
 
   }
