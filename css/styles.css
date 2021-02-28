@@ -73,6 +73,11 @@ body {
   outline: 0 !important;
 }
 
+ol, ul {  
+  display: inline-block;
+  text-align: left;
+}
+
 hr {
   box-sizing: content-box;
   height: 0;
