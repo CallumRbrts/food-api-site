@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-const mongoManager = require('./mongoManager.js');
+//const mongoManager = require('./mongoManager.js');
 
 
 module.exports = {
@@ -9,6 +9,7 @@ module.exports = {
     bcrypt.hash(password, saltRounds, function(err, hash) {
       console.log(hash);
       // Store hash in your password DB.
+      //mongoManager here to fix heroku
       const mongoManager = require('./mongoManager.js');
       mongoManager.addUser(username, email, hash, function(result){
         if(result == "Success"){
