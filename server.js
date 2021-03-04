@@ -93,22 +93,14 @@ app.route('/')
    }
     // respond with the session object
     console.log(req.session);
-
-
     //result of get is return through a callback, so I need to do the dynamic html in the callback (variable can't be passed up due to async)
     mongoManager.getFromDB("dailyRecipes", function(result){
-      //console.log(result);
       var recipes = [];
-
-
       for (let i = 0; i < result.length; ++i){
-        //console.log(result[i].extendedIngredients[0]);
         var ingredients = "";
         for(let j= 0; j < result[i].extendedIngredients.length; ++j){
-          var metric = result[i].extendedIngredients[j].measures.metric
-          //console.log(metric.amount + " " + metric.unitShort + " " + result[i].extendedIngredients[j].originalName);
+          var metric = result[i].extendedIngredients[j].measures.metric;
           var ingredient = '<li>'+ Math.round(metric.amount) + " " + metric.unitShort + " " + result[i].extendedIngredients[j].originalName + ' </li>';
-          //ingredients.push(ingredient)
           ingredients += ingredient;
         }
         var instructions = "";
@@ -116,21 +108,10 @@ app.route('/')
           var instruction = '<li>' + result[i].analyzedInstructions[0]['steps'][k]['step'] + '</li>';
           instructions += instruction;
         }
-
-        // for (ingredient in result[i].extendedIngredients){
-        //   console.log(ingredient);
-        //   ingredients.push('<li>'+ ingredient.originalString+ ' </li>')
-        // }
-
-        //change instructions display to analyzedInstructions
         var tagline = '<div class="col-md-6 col-lg-4 mb-5"><div class="portfolio-item mx-auto" data-toggle="modal" data-target="#portfolioModal'+i+'"><div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100"><div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div></div><img class="img-fluid" src="'+result[i].image+'" alt="" /></div></div>';
-        var card ='<div class="portfolio-modal modal fade" id="portfolioModal'+i+'" tabindex="-1" role="dialog" aria-labelledby="portfolioModal1Label" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fas fa-times"></i></span></button><div class="modal-body text-center"><div class="container"><div class="row justify-content-center"><div class="col-lg-8"><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">'+result[i].title+'</h2><div class="divider-custom"><div class="divider-custom-line"></div><div class="divider-custom-icon"><i class="fas fa-star"></i></div><div class="divider-custom-line"></div></div><img class="img-fluid rounded mb-5" src="'+result[i].image+'" alt="" /><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Ingredients</h2><p class="mb-5"><ul>'+ingredients+'</ul></p></br><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Instructions</h2></br><p style="text-align: center;" class="mb-5"><ol>'+instructions+'</ol></p><button id="cookbookButton" class="btn btn-primary cookbook"><i class="fas fa-times fa-fw"></i>Add to Cookbook</button></div></div></div></div></div></div></div>'
-
+        var card ='<div class="portfolio-modal modal fade" id="portfolioModal'+i+'" tabindex="-1" role="dialog" aria-labelledby="portfolioModal1Label" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fas fa-times"></i></span></button><div class="modal-body text-center"><div class="container"><div class="row justify-content-center"><div class="col-lg-8"><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">'+result[i].title+'</h2><div class="divider-custom"><div class="divider-custom-line"></div><div class="divider-custom-icon"><i class="fas fa-star"></i></div><div class="divider-custom-line"></div></div><img class="img-fluid rounded mb-5" src="'+result[i].image+'" alt="" /><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Ingredients</h2><p class="mb-5"><ul>'+ingredients+'</ul></p></br><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Instructions</h2></br><p style="text-align: center;" class="mb-5"><ol>'+instructions+'</ol></p><button id="cookbookButton" class="btn btn-primary cookbook"><i class="fas fa-times fa-fw"></i>Add to Cookbook</button></div></div></div></div></div></div></div>';
         recipes.push([tagline, card]);
       }
-
-      //console.log(recipes);
-
       res.render(__dirname+'/index.ejs',{
         recipes: recipes
       });
@@ -200,15 +181,7 @@ basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
   res.sendFile(__dirname+'/cookbook.html')
 });
 
-adminRouter.get('/users', function(req,res){
-  res.send('I show all the users');
-});
-
-adminRouter.get('/users/:name', function(req,res){
-  res.send('Hello ' + req.params.name + '! Are you my little pogchamp?');
-});
-
-app.get( '/', function( req, res ) {
+app.get('/', function( req, res ) {
   res.sendFile( path.join( __dirname, 'css', 'index.html' ));
 });
 
@@ -261,6 +234,78 @@ function addToDB(dbo, myobj, collection) {
       console.log("1 user inserted");
     });
 }
+
+app.route('/altIndex')
+  .get(function (req,res){
+    if(req.session.page_views){
+     req.session.page_views++;
+     console.log("You visited this page " + req.session.page_views + " times");
+   }else{
+     req.session.page_views = 1;
+     console.log("Welcome to this page for the first time!");
+   }
+    // respond with the session object
+    console.log(req.session);
+    //result of get is return through a callback, so I need to do the dynamic html in the callback (variable can't be passed up due to async)
+    mongoManager.getFromDB("dailyRecipes", function(result){
+      var recipes = [];
+      for (let i = 0; i < result.length; ++i){
+        var ingredients = "";
+        for(let j= 0; j < result[i].extendedIngredients.length; ++j){
+          var metric = result[i].extendedIngredients[j].measures.metric;
+          var ingredient = '<li>'+ Math.round(metric.amount) + " " + metric.unitShort + " " + result[i].extendedIngredients[j].originalName + ' </li>';
+          ingredients += ingredient;
+        }
+        var instructions = "";
+        for (let k = 0; k < result[i].analyzedInstructions[0]['steps'].length; ++k) {
+          var instruction = '<li>' + result[i].analyzedInstructions[0]['steps'][k]['step'] + '</li>';
+          instructions += instruction;
+        }
+        //var tagline = '<div class="col-md-6 col-lg-4 mb-5"><div class="portfolio-item mx-auto" data-toggle="modal" data-target="#portfolioModal'+i+'"><div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100"><div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div></div><img class="img-fluid" src="'+result[i].image+'" alt="" /></div></div>';
+        var card ='<div class="portfolio-modal modal fade" id="portfolioModal'+i+'" tabindex="-1" role="dialog" aria-labelledby="portfolioModal1Label" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fas fa-times"></i></span></button><div class="modal-body text-center"><div class="container"><div class="row justify-content-center"><div class="col-lg-8"><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">'+result[i].title+'</h2><div class="divider-custom"><div class="divider-custom-line"></div><div class="divider-custom-icon"><i class="fas fa-star"></i></div><div class="divider-custom-line"></div></div><img class="img-fluid rounded mb-5" src="'+result[i].image+'" alt="" /><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Ingredients</h2><p class="mb-5"><ul>'+ingredients+'</ul></p></br><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Instructions</h2></br><p style="text-align: center;" class="mb-5"><ol>'+instructions+'</ol></p><button id="cookbookButton" class="btn btn-primary cookbook"><i class="fas fa-times fa-fw"></i>Add to Cookbook</button></div></div></div></div></div></div></div>';
+        var tagline = '<div class="card mb-3"><div class="card-body"><h5 class="card-title">'+result[i].title+'</h5><ul>'+ingredients+'</ul></br><button id="cookbookButton" class="btn btn-primary cookbook">Add to Cookbook</button></div></div>';
+        recipes.push([tagline, card]);
+      }
+      res.render(__dirname+'/altIndex.ejs',{
+        recipes: recipes
+      });
+
+    });
+    //console.log(recipes);
+    //const tagline = '<div class="col-md-6 col-lg-4 mb-5"><div class="portfolio-item mx-auto" data-toggle="modal" data-target="#portfolioModal1"><div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100"><div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div></div><img class="img-fluid" src="assets/img/portfolio/cabin.png" alt="" /></div></div>';
+  })
+  .post(function(req,res){
+    var recipe_name = req.body.recipe
+    console.log(recipe_name);
+    //could get recipe from DB, this would save on API requests
+    //but it would create a bug in which the user wouldn't be able to add
+    //a recipe to their cookbook at midnight when the new daily recipes are generated
+    //this is because I delete the collection at the end of every day
+    let url = "https://api.spoonacular.com/recipes/complexSearch"
+    var request = unirest("GET", url);
+    request.query({
+      "apiKey": apiKey,
+      "query": recipe_name,
+      "number": 1,
+      "addRecipeInformation" : true,
+      "addRecipeNutrition": true
+    });
+
+    request.end(async function(res) {
+      console.log(res.body);
+      //console.log(res.body.results[0].analyzedInstructions);
+      var recipe = res.body.results[0];
+      mongoManager.searchDB("cookbook", recipe.id, function(bool){
+        if (bool) {
+          console.log("Elem exists in collection");
+        } else {
+          console.log("Elem doesn't exist in collection");
+          mongoManager.addToDB("cookbook", recipe);
+        }
+      });
+    });
+  });
+
 
 app.listen(PORT);
 console.log('Express server running at http://127.0.0.1:'+PORT+'/');

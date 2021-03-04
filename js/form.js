@@ -27,7 +27,7 @@ for(var i = 0; i < allButtons.length; i++){
 
     // req.open("GET", "/register?username=" + username + "&email=" + email + "&password=" + password, true);
     // req.send();
-
+    //console.log(recipe_name);
     var params = 'recipe=' + recipe_name;
     req.open('POST', "/?", true);
     req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');

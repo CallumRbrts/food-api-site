@@ -1,0 +1,20 @@
+.vertical-container-item {
+    position: relative;
+    display: flex;
+    /* background: url("../record.jpg") no-repeat center; */
+    height: 200px;
+    margin: 1rem;
+    background-size: cover;
+}
+.title{
+  font-family: 'Roboto', sans-serif;
+  font-size: 18px;
+}
+.img{
+  height: "150px";
+  width: "150px";
+  margin-right : "1rem";
+}
+.show-recipe{
+  display: block;
+}
