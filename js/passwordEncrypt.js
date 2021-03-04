@@ -9,6 +9,7 @@ module.exports = {
     bcrypt.hash(password, saltRounds, function(err, hash) {
       console.log(hash);
       // Store hash in your password DB.
+      const mongoManager = require('./mongoManager.js');
       mongoManager.addUser(username, email, hash, function(result){
         if(result == "Success"){
           res.redirect('/login');
