@@ -1,6 +1,11 @@
 var {user, password, dbname, secretKey, apiKey} = require('../config.json');
 const MongoClient = require('mongodb').MongoClient;
 const uri = "mongodb+srv://"+user+":"+password+"@web-entreprise-systems.enfbr.mongodb.net/"+dbname+"?retryWrites=true&w=majority";
+const jwtAuth = require('./jwtAuth.js');
+const passwordEncrypt = require('./passwordEncrypt.js');
+
+
+
 
 module.exports = {
   addToDB: function(collection, myobj){
@@ -11,10 +16,10 @@ module.exports = {
       dbo.collection(collection).insert(myobj, function(err, res){
         if (err) throw err;
         if (myobj.length == undefined) {
-          console.log(1 + " recipe inserted");
+          console.log(1 + " object inserted");
         }
         else{
-          console.log(myobj.length + " recipe(s) inserted");
+          console.log(myobj.length + " object(s) inserted");
         }
       });
       db.close();
@@ -57,6 +62,79 @@ module.exports = {
         return callback(true);
       }
     });
+  },
+  addUser: function(username, email, password, callback){
+    MongoClient.connect(uri, async function(err, db){
+     if(err) throw err;
+     var dbo = db.db(dbname);
+     var users = dbo.collection("users");
+     var existingUsername = users.find({ username: username });
+     var existingEmail = users.find({ email: email });
+     const allEmails = await existingEmail.toArray();
+     const allUsernames = await existingUsername.toArray();
+     console.log(allEmails);
+     console.log(allUsernames);
+     if(allEmails.length > 0){
+       console.log('Email in use');
+       db.close();
+       return callback("Failed! Email is already in use!");
+       //res.status(400).send({ message: "Failed! Email is already in use!" });
+       //res.redirect('/register');
 
-  }
+     } else if (allUsernames.length > 0) {
+       console.log('Username already taken');
+       db.close();
+      // res.status(400).send({ message: "Failed! Username is already in use!" });
+       return callback("Failed! Username is already in use!");
+     } else {
+       console.log("User Doesn't Exist");
+       var myobj = { username: username, email: email, password: password };
+       dbo.collection("users").insertOne(myobj, function(err, res) {
+         if (err) throw err;
+         console.log("1 user inserted");
+       });
+       db.close();
+       return callback("Success");
+       //res.redirect('/login');
+     }
+   });
+ },
+ loginUser: function(email, password, callback){
+   MongoClient.connect(uri, async function(err, db){
+     if(err) throw err;
+     var dbo = db.db(dbname);
+     var users = dbo.collection("users");
+     var existingUser = users.find({email: email});
+     const allUsers = await existingUser.toArray();
+     console.log(allUsers);
+     if (allUsers.length > 0) {
+       passwordEncrypt.decrypt(password, allUsers[0].password, function(result){
+         if (result){
+           console.log("Login Successful");
+          // token = jwtAuth.createToken(allUsers[0]);
+           db.close();
+           return callback(true, allUsers[0]);
+           // console.log({
+           //   id: allUsers[0]._id,
+           //   username: allUsers[0].username,
+           //   email: allUsers[0].email,
+           //   accessToken: token
+           // });
+           // req.session.x_access_token = token;
+           // res.redirect('/cookbook');
+         }else{
+           console.log('Password Incorrect');
+           db.close();
+           return callback(false);
+           //res.status(400).send({ message: "Invalid Login Details" });
+         }
+       });
+     }else{
+       console.log('Invalid Email');
+       db.close();
+       return callback(false);
+       //res.status(400).send({ message: "Invalid Login Details" });
+     }
+   });
+ }
 }

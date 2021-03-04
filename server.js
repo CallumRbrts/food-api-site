@@ -8,6 +8,7 @@ const imageSearch = require('image-search-google');
 const client = new imageSearch('92bdea160fd4dc820', searchAPIkey);
 const options = {page:1};
 const mongoManager = require('./js/mongoManager.js');
+const passwordEncrypt = require('./js/passwordEncrypt.js');
 const expressValidator = require('express-validator');
 var session = require('express-session');
 const schedule = require('node-schedule');
@@ -62,9 +63,9 @@ app.use(cookieParser());
 app.use(session({
   name: 'session',
   resave: true,
-  saveUninitialized: true,
+  saveUninitialized: true, //HttpOnly
   secret: secretKey,
- }));
+}));
 app.use(flash());
 app.set('view engine', 'ejs');
 
@@ -214,7 +215,7 @@ app.get( '/', function( req, res ) {
 app.use('/admin', adminRouter);
 app.use('/', basicRouter);
 
-
+//SSL cloudflare?
 app.route('/login')
   .get(function(req,res){
     res.sendFile(__dirname+'/login.html');
@@ -225,47 +226,21 @@ app.route('/login')
     console.log('processing');
     var email = req.body.email;
     var password = req.body.password;
-
-    MongoClient.connect(uri, async function(err, db){
-      if(err) throw err;
-      var dbo = db.db(dbname);
-      var users = dbo.collection("users");
-      var existingUser = users.find({ email: email, password: password});
-      //var existingUser = users.find({$and:[{email: email},{password:password}]});
-
-      const allUsers = await existingUser.toArray();
-      console.log(allUsers);
-      if (allUsers.length > 0) {
-        console.log('Login Successful');
-        // var token = jwt.sign({ id: allUsers[0]._id }, secretKey, {
-        //   expiresIn: 86400 // 24 hours
-        // });
-        token = jwtAuth.createToken(allUsers[0]);
-        db.close();
+    mongoManager.loginUser(email, password, function(result, user = null){
+      if(result){
+        token = jwtAuth.createToken(user);
         console.log({
-          id: allUsers[0]._id,
-          username: allUsers[0].username,
-          email: allUsers[0].email,
+          id: user._id,
+          username: user.username,
+          email: user.email,
           accessToken: token
         });
-        //Attempting to use session instead of cookies - Both seem to work
-        //I have decided to try and use session instead of cookies as they are safer
-        //Session is safer for storing user data because it can not be modified by the end-user and
-        //can only be set on the server-side.
-        //Cookies on the other hand can be hijacked because they are just stored on the browser
-
-        //res.cookie('x-access-token',token);
-        //res.clearCookie('x-access-token')
         req.session.x_access_token = token;
-
         res.redirect('/cookbook');
-
       }else{
-        console.log('Username already taken');
-        db.close();
-        res.status(400).send({ message: "Invalid Login Details" });
+        console.log("Invalid Login Details");
+        //res.status(400).send({ message: "Invalid Login Details" });
       }
-
     });
 });
 
@@ -277,43 +252,7 @@ app.route('/register')
      var username = req.body.username;
      var email =  req.body.email;//another possibility req.params['email']
      var password = req.body.password;
-     MongoClient.connect(uri, async function(err, db){
-      if(err) throw err;
-      var dbo = db.db(dbname);
-      var users = dbo.collection("users");
-      var existingUsername = users.find({ username: username });
-      var existingEmail = users.find({ email: email });
-      const allEmails = await existingEmail.toArray();
-      const allUsernames = await existingUsername.toArray();
-      console.log(allEmails);
-      console.log(allUsernames);
-      if(allEmails.length > 0){
-        console.log('Email in use');
-        db.close();
-        res.status(400).send({ message: "Failed! Email is already in use!" });
-        //res.redirect('/register');
-
-
-      } else if (allUsernames.length > 0) {
-        console.log('Username already taken');
-        db.close();
-        res.status(400).send({ message: "Failed! Username is already in use!" });
-
-      } else {
-        console.log("User Doesn't Exist");
-        var myobj = { username: username, email: email, password: password };
-        dbo.collection("users").insertOne(myobj, function(err, res) {
-          if (err) throw err;
-          console.log("1 user inserted");
-        });
-        db.close();
-        res.redirect('/login');
-      }
-     });
-
-
-     console.log('The Register Params: ' + username + " " + email + " " + password);
-     //res.send('processing register form!');
+     passwordEncrypt.encrypt(username, email, password, res);
    });
 
 function addToDB(dbo, myobj, collection) {
