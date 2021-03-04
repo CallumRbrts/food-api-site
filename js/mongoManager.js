@@ -4,9 +4,6 @@ const uri = "mongodb+srv://"+user+":"+password+"@web-entreprise-systems.enfbr.mo
 const jwtAuth = require('./jwtAuth.js');
 const passwordEncrypt = require('./passwordEncrypt.js');
 
-
-
-
 module.exports = {
   addToDB: function(collection, myobj){
     MongoClient.connect(uri, async function(err,db){
