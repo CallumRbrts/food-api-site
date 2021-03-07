@@ -38,7 +38,7 @@ module.exports = {
        mongoManager.addToDB("dailyRecipes", res.body.recipes)
     });
   },
-  complexSearch: function(recipe_name, res){
+  complexSearch: function(recipe_name, res, req){
     let url = "https://api.spoonacular.com/recipes/complexSearch";
     var request = unirest("GET", url);
     request.query({
@@ -49,7 +49,7 @@ module.exports = {
       "addRecipeNutrition": true
     });
 
-    request.end(async function(res) {
+    request.end(function(res) {
       console.log(res.body);
       //console.log(res.body.results[0].analyzedInstructions);
       var recipe = res.body.results[0];
@@ -58,7 +58,8 @@ module.exports = {
           console.log("Elem exists in collection");
         } else {
           console.log("Elem doesn't exist in collection");
-          mongoManager.addToDB("cookbook", recipe);
+          //mongoManager.addToDB("cookbook", recipe);
+          mongoManager.addToUser(recipe, req)
         }
       });
     });

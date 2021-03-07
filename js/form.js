@@ -13,8 +13,12 @@ req.onreadystatechange = function() {
   var txt = "";
   if (this.readyState == 4 && this.status == 200) {
     var response = this.responseText;
-    console.log (response);
+    console.log(response);
     document.getElementById("answer").innerHTML = response;
+  }
+  if(this.status == 202){
+    //wait for db change to be made
+    setTimeout(() => {  window.location.reload(); }, 1000);
   }
 };
 
@@ -25,7 +29,8 @@ refreshButton.onclick = function(e){
   req.open('POST', "/altIndex?", true);
   req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
   req.send(params);
-  window.location.reload();
+  console.log(params);
+  //window.location.reload();
 }
 
 var allButtons = document.getElementsByClassName('cookbook');

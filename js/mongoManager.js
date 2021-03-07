@@ -1,5 +1,6 @@
 var {user, password, dbname, secretKey, apiKey} = require('../config.json');
 const MongoClient = require('mongodb').MongoClient;
+var ObjectId = require('mongodb').ObjectId;
 const uri = "mongodb+srv://"+user+":"+password+"@web-entreprise-systems.enfbr.mongodb.net/"+dbname+"?retryWrites=true&w=majority";
 const jwtAuth = require('./jwtAuth.js');
 const passwordEncrypt = require('./passwordEncrypt.js');
@@ -26,7 +27,6 @@ module.exports = {
     MongoClient.connect(uri, async function(err, db){
       if(err) throw err;
       var dbo = db.db(dbname);
-      var users = dbo.collection(collection);
       dbo.collection(collection).deleteMany( { }, function(err, res){
         if (err) throw err;
         console.log("emptied the " + collection + " collection");
@@ -85,7 +85,7 @@ module.exports = {
        return callback("Failed! Username is already in use!");
      } else {
        console.log("User Doesn't Exist");
-       var myobj = { username: username, email: email, password: password };
+       var myobj = { username: username, email: email, password: password, cookbook: []};
        dbo.collection("users").insertOne(myobj, function(err, res) {
          if (err) throw err;
          console.log("1 user inserted");
@@ -132,6 +132,35 @@ module.exports = {
        return callback(false);
        //res.status(400).send({ message: "Invalid Login Details" });
      }
+   });
+ },
+ addToUser: function(myobj, req){
+   console.log(req.session.user);
+   MongoClient.connect(uri, async function(err, db){
+     if(err) throw err;
+     var dbo = db.db(dbname);
+     var users = dbo.collection("users");
+     //add if elem exists
+     var existingUser = users.find({_id: ObjectId(req.session.user)});
+     const allUsers = await existingUser.toArray();
+     var currentUser = allUsers[0];
+     var currCookbook = currentUser.cookbook;
+     currCookbook.push(myobj);
+     currentUser.cookbook = currCookbook;
+     console.log(currentUser);
+     users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currCookbook});
+     //users.findAndModify({query: {_id: req.session.user }, update: {cookbook: }});
+     console.log("Added recipe to cookbook");
+   });
+ },
+ getUserFromDB: function(id, callback){
+   MongoClient.connect(uri, async function(err, db){
+     if(err) throw err;
+     var dbo = db.db(dbname);
+     var elem = dbo.collection("users").find({_id: ObjectId(id)});
+     var user = await elem.toArray();
+     user = user[0];
+     callback(user);
    });
  }
 }
