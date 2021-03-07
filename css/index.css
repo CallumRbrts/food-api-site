@@ -10,11 +10,25 @@
   font-family: 'Roboto', sans-serif;
   font-size: 18px;
 }
-.img{
-  height: "150px";
-  width: "150px";
-  margin-right : "1rem";
-}
+
 .show-recipe{
   display: block;
+}
+
+.float-container {
+    padding: 20px;
+    display: table-row;
+
+}
+.float-child {
+    display: table-cell;
+    overflow-wrap: break-word;
+    height: 100%;
+    width: 50%;
+    float: left;
+}
+
+#refresh{
+  margin-top: 1rem;
+
 }
