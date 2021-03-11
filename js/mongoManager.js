@@ -186,5 +186,20 @@ module.exports = {
      //users.findAndModify({query: {_id: req.session.user }, update: {cookbook: }});
      console.log("Counter Incremented");
    });
+ },
+ removeElem: function(index, req){
+   MongoClient.connect(uri, async function(err, db){
+     if(err) throw err;
+     var dbo = db.db(dbname);
+     var users = dbo.collection("users");
+     var existingUser = users.find({_id: ObjectId(req.session.user)});
+     const allUsers = await existingUser.toArray();
+     var currentUser = allUsers[0];
+     var currCookbook = currentUser.cookbook;
+     currCookbook.splice(index, 1);
+     currentUser.cookbook = currCookbook;
+     users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currCookbook, clicks_index:currentUser.clicks_index, clicks_alt: currentUser.clicks_alt, role: currentUser.role});
+     console.log("Removed Recipe");
+   });
  }
 }
