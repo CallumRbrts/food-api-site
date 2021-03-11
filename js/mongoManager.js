@@ -24,7 +24,7 @@ module.exports = {
     });
   },
   emptyCollection: function(collection){
-    MongoClient.connect(uri, async function(err, db){
+    MongoClient.connect(uri, function(err, db){
       if(err) throw err;
       var dbo = db.db(dbname);
       dbo.collection(collection).deleteMany( { }, function(err, res){
@@ -46,11 +46,11 @@ module.exports = {
       return callback(elem_array);
     });
   },
-  searchDB: async function(collection, id, callback){
-    MongoClient.connect(uri, async function(err, db){
+  searchDB: function(collection, id, callback){
+    MongoClient.connect(uri, function(err, db){
       if(err) throw err;
       var dbo = db.db(dbname);
-      var elem = await dbo.collection(collection).findOne({id: id})
+      var elem = dbo.collection(collection).findOne({id: id}) //await?
       console.log(elem);
       db.close();
       if (elem == null) {
@@ -85,7 +85,7 @@ module.exports = {
        return callback("Failed! Username is already in use!");
      } else {
        console.log("User Doesn't Exist");
-       var myobj = { username: username, email: email, password: password, cookbook: []};
+       var myobj = { username: username, email: email, password: password, cookbook: [], clicks_index: 0, clicks_alt: 0};
        dbo.collection("users").insertOne(myobj, function(err, res) {
          if (err) throw err;
          console.log("1 user inserted");
@@ -148,7 +148,7 @@ module.exports = {
      currCookbook.push(myobj);
      currentUser.cookbook = currCookbook;
      console.log(currentUser);
-     users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currCookbook});
+     users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currCookbook, clicks_index:currentUser.clicks_index, clicks_alt: currentUser.clicks_alt});
      //users.findAndModify({query: {_id: req.session.user }, update: {cookbook: }});
      console.log("Added recipe to cookbook");
    });
@@ -161,6 +161,30 @@ module.exports = {
      var user = await elem.toArray();
      user = user[0];
      callback(user);
+   });
+ },
+ incrementClick: function(req, type){
+   MongoClient.connect(uri, async function(err, db){
+     if(err) throw err;
+     var dbo = db.db(dbname);
+     var users = dbo.collection("users");
+     //add if elem exists
+     var existingUser = users.find({_id: ObjectId(req.session.user)});
+     const allUsers = await existingUser.toArray();
+     var currentUser = allUsers[0];
+     var currCounter = 0;
+     if(type == "page_clicks_index"){
+        currCounter = currentUser.clicks_index;
+        currCounter++;
+        users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currentUser.cookbook, clicks_index:currCounter, clicks_alt: currentUser.clicks_alt});
+     }else{
+        currCounter = currentUser.clicks_alt;
+        currCounter++;
+        users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currentUser.cookbook, clicks_index:currentUser.clicks_index, clicks_alt: currCounter});
+     }
+     console.log(currCounter);
+     //users.findAndModify({query: {_id: req.session.user }, update: {cookbook: }});
+     console.log("Counter Incremented");
    });
  }
 }

@@ -26,7 +26,7 @@ req.onreadystatechange = function() {
 var refreshButton = document.getElementById('refresh');
 refreshButton.onclick = function(e){
   var params = 'recipe=refresh';
-  req.open('POST', "/?", true);
+  req.open('POST', "/altIndex?", true);
   req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
   req.send(params);
   console.log(params);
@@ -47,7 +47,7 @@ for(var i = 0; i < allButtons.length; i++){
     // req.send();
     //console.log(recipe_name);
     var params = 'recipe=' + recipe_name;
-    req.open('POST', "/?", true);
+    req.open('POST', "/altIndex?", true);
     req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     req.send(params);
 
