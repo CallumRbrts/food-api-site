@@ -1,8 +1,8 @@
 var unirest = require("unirest");
 const mongoManager = require('./mongoManager.js');
-var {user, password, dbname, secretKey, apiKey, searchAPIkey} = require('../config.json');
+var {user, password, dbname, secretKey, apiKey, searchAPIkey, googleUser} = require('../config.json');
 const imageSearch = require('image-search-google');
-const client = new imageSearch('92bdea160fd4dc820', searchAPIkey);
+const client = new imageSearch(googleUser, searchAPIkey);
 const options = {page:1};
 
 module.exports = {

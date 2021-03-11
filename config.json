@@ -4,5 +4,6 @@
 	"dbname": "food-site-db",
 	"secretKey": "not-sure-if-i-should-be-making-this-up",
 	"apiKey": "082b609e0d374c5ebfa9225c2cab1cdd",
-	"searchAPIkey": "AIzaSyDRkjwnfn80YC815nS8GbtZ9HHDwp4bER4"
+	"searchAPIkey": "AIzaSyDRkjwnfn80YC815nS8GbtZ9HHDwp4bER4",
+	"googleUser": "92bdea160fd4dc820"
 }

@@ -291,7 +291,7 @@ app.route('/altIndex')
      req.session.page_views = 1;
      console.log("Welcome to this page for the first time!");
    }
-   
+
    if(req.session.login){
      var loginButton = '<li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/logout">Logout</a></li>'
    }else {
