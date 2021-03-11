@@ -53,15 +53,30 @@ module.exports = {
       console.log(res.body);
       //console.log(res.body.results[0].analyzedInstructions);
       var recipe = res.body.results[0];
-      mongoManager.searchDB("cookbook", recipe.id, function(bool){
-        if (bool) {
-          console.log("Elem exists in collection");
-        } else {
+      mongoManager.getUserFromDB(req.session.user, function(user){
+        var userCookbook = user.cookbook;
+        var bool = false;
+        for(var y = 0; y < userCookbook.length; ++y){
+          if(userCookbook[y].title == recipe.title){
+            console.log("Elem exists in collection");
+            bool = true;
+            break;
+          }
+        }
+        if(!bool){
           console.log("Elem doesn't exist in collection");
-          //mongoManager.addToDB("cookbook", recipe);
           mongoManager.addToUser(recipe, req)
         }
       });
+      // mongoManager.searchDB("users", req.session.user, function(bool){
+      //   if (bool) {
+      //     console.log("Elem exists in collection");
+      //   } else {
+      //     console.log("Elem doesn't exist in collection");
+      //     //mongoManager.addToDB("cookbook", recipe);
+      //     mongoManager.addToUser(recipe, req)
+      //   }
+      // });
     });
   }
 }

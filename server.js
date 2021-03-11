@@ -18,7 +18,7 @@ var port = PORT;
 
 
 //check if collected recipe has an image, if not either use a default image or run another recipe with an image
-var j = schedule.scheduleJob({hour: 00, minute: 00}, async function(){
+var j = schedule.scheduleJob({hour: 00, minute: 00}, async function(res){
   console.log("Running Scheduled Job");
   await mongoManager.emptyCollection("dailyRecipes");
   api.getRandomRecipes(6, res);
@@ -36,6 +36,7 @@ app.use(session({ //ask about position of this
   saveUninitialized: true, //HttpOnly
   secret: secretKey,
   login: false,
+  special: false,
 }));
 app.use(flash());
 app.set('view engine', 'ejs');
@@ -70,6 +71,12 @@ app.route('/')
     }else {
       var loginButton = '<li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/login">Login</a></li>'
     }
+
+    if(req.session.special){
+      var refreshButton = '<div class="col text-center"><button id="refresh" class="btn btn-primary btn-lg">Refresh Recipes</button></div>';
+    }else {
+      var refreshButton ='<div class="col text-center" id="refresh"></div>';
+    }
     //result of get is return through a callback, so I need to do the dynamic html in the callback (variable can't be passed up due to async)
     mongoManager.getFromDB("dailyRecipes", function(result){
       var recipes = [];
@@ -100,7 +107,8 @@ app.route('/')
       }
       res.render(__dirname+'/index.ejs',{
         recipes: recipes,
-        loginButton: loginButton
+        loginButton: loginButton,
+        refreshButton: refreshButton
       });
 
     });
@@ -122,9 +130,6 @@ app.route('/')
       //this is because I delete the collection at the end of every day
       api.complexSearch(recipe_name, res, req);
     }
-
-
-
 
     mongoManager.incrementClick(req, "page_clicks_index");
 
@@ -248,6 +253,9 @@ app.route('/login')
         req.session.x_access_token = token;
         req.session.user = user._id;
         req.session.login = true;
+        if(user.role == "admin"){
+          req.session.special = true;
+        }
         res.redirect('/cookbook');
       }else{
         console.log("Invalid Login Details");
@@ -261,6 +269,7 @@ app.route('/logout')
     req.session.user = "";
     req.session.login = false;
     req.session.x_access_token = "";
+    req.session.special = false;
     res.redirect('/');
   });
 
@@ -297,6 +306,13 @@ app.route('/altIndex')
    }else {
      var loginButton = '<li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/login">Login</a></li>'
    }
+   //probably insecure due to admin being saved in session
+   if(req.session.special){
+     var refreshButton = '<div class="col text-center"><button id="refresh" class="btn btn-primary btn-lg">Refresh Recipes</button></div>';
+   }else {
+     var refreshButton ='<div class="col text-center" id="refresh"></div>';
+   }
+
     // respond with the session object
     console.log(req.session);
     //result of get is return through a callback, so I need to do the dynamic html in the callback (variable can't be passed up due to async)
@@ -330,7 +346,8 @@ app.route('/altIndex')
       }
       res.render(__dirname+'/altIndex.ejs',{
         recipes: recipes,
-        loginButton: loginButton
+        loginButton: loginButton,
+        refreshButton: refreshButton
       });
 
     });
@@ -349,7 +366,7 @@ app.route('/altIndex')
       api.complexSearch(recipe_name, res, req);
     }
 
-    mongoManager.incrementClick(req, "page_clicks_index");
+    mongoManager.incrementClick(req, "page_clicks_alt");
 
       // let url = "https://api.spoonacular.com/recipes/random";
       // var request = unirest("GET", url);

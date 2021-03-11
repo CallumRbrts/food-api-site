@@ -47,10 +47,10 @@ module.exports = {
     });
   },
   searchDB: function(collection, id, callback){
-    MongoClient.connect(uri, function(err, db){
+    MongoClient.connect(uri, async function(err, db){
       if(err) throw err;
       var dbo = db.db(dbname);
-      var elem = dbo.collection(collection).findOne({id: id}) //await?
+      var elem = await dbo.collection(collection).findOne({id: id}) //await?
       console.log(elem);
       db.close();
       if (elem == null) {
@@ -85,7 +85,7 @@ module.exports = {
        return callback("Failed! Username is already in use!");
      } else {
        console.log("User Doesn't Exist");
-       var myobj = { username: username, email: email, password: password, cookbook: [], clicks_index: 0, clicks_alt: 0};
+       var myobj = { username: username, email: email, password: password, cookbook: [], clicks_index: 0, clicks_alt: 0, role: "member"};
        dbo.collection("users").insertOne(myobj, function(err, res) {
          if (err) throw err;
          console.log("1 user inserted");
@@ -148,7 +148,7 @@ module.exports = {
      currCookbook.push(myobj);
      currentUser.cookbook = currCookbook;
      console.log(currentUser);
-     users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currCookbook, clicks_index:currentUser.clicks_index, clicks_alt: currentUser.clicks_alt});
+     users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currCookbook, clicks_index:currentUser.clicks_index, clicks_alt: currentUser.clicks_alt, role: currentUser.role});
      //users.findAndModify({query: {_id: req.session.user }, update: {cookbook: }});
      console.log("Added recipe to cookbook");
    });
@@ -176,11 +176,11 @@ module.exports = {
      if(type == "page_clicks_index"){
         currCounter = currentUser.clicks_index;
         currCounter++;
-        users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currentUser.cookbook, clicks_index:currCounter, clicks_alt: currentUser.clicks_alt});
+        users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currentUser.cookbook, clicks_index:currCounter, clicks_alt: currentUser.clicks_alt, role: currentUser.role});
      }else{
         currCounter = currentUser.clicks_alt;
         currCounter++;
-        users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currentUser.cookbook, clicks_index:currentUser.clicks_index, clicks_alt: currCounter});
+        users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currentUser.cookbook, clicks_index:currentUser.clicks_index, clicks_alt: currCounter, role: currentUser.role});
      }
      console.log(currCounter);
      //users.findAndModify({query: {_id: req.session.user }, update: {cookbook: }});
