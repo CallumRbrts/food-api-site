@@ -201,5 +201,13 @@ module.exports = {
      users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currCookbook, clicks_index:currentUser.clicks_index, clicks_alt: currentUser.clicks_alt, role: currentUser.role});
      console.log("Removed Recipe");
    });
+ },
+ deleteUser: function(req){
+   MongoClient.connect(uri, async function(err, db){
+     if(err) throw err;
+     var dbo = db.db(dbname);
+     var users = dbo.collection("users");
+     var existingUser = users.remove({_id: ObjectId(req.session.user)});
+   });
  }
 }

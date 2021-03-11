@@ -18,7 +18,7 @@ req.onreadystatechange = function() {
   }
   if(this.status == 202){
     //wait for db change to be made
-    setTimeout(() => {  window.location.reload(); }, 1000);
+    setTimeout(() => {  window.history.back() }, 1000);
   }
 };
 

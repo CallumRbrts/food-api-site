@@ -225,18 +225,26 @@ basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
 basicRouter.post('/cookbook',[jwtAuth.verifyToken], function(req, res){
   var recipe_name = req.body.recipe
   console.log(recipe_name);
-
-  mongoManager.getUserFromDB(req.session.user, function(user){
-    var userCookbook = user.cookbook;
-    for(var y = 0; y < userCookbook.length; ++y){
-      if(userCookbook[y].title == recipe_name){
-        //remove
-        mongoManager.removeElem(y, req);
-        break;
+  if(recipe_name == "delete"){
+    mongoManager.deleteUser(req);
+    // req.session.user = "";
+    // req.session.login = false;
+    // req.session.x_access_token = "";
+    // req.session.special = false;
+    res.status(202).send();
+    //res.redirect('/');
+  }else{
+    mongoManager.getUserFromDB(req.session.user, function(user){
+      var userCookbook = user.cookbook;
+      for(var y = 0; y < userCookbook.length; ++y){
+        if(userCookbook[y].title == recipe_name){
+          //remove
+          mongoManager.removeElem(y, req);
+          break;
+        }
       }
-    }
-  });
-
+    });
+  }
 });
 
 
