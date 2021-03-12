@@ -47,7 +47,7 @@ module.exports = {
     });
 
     request.end(function(res) {
-      console.log(res.body);
+      //console.log(res.body);
       var recipe = res.body.results[0];
       mongoManager.getUserFromDB(req.session.user, function(user){
         var userCookbook = user.cookbook;

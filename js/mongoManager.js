@@ -51,7 +51,7 @@ module.exports = {
       if(err) throw err;
       var dbo = db.db(dbname);
       var elem = await dbo.collection(collection).findOne({id: id}) //await?
-      console.log(elem);
+      //console.log(elem);
       db.close();
       if (elem == null) {
         return callback(false);
@@ -69,8 +69,8 @@ module.exports = {
      var existingEmail = users.find({ email: email });
      const allEmails = await existingEmail.toArray();
      const allUsernames = await existingUsername.toArray();
-     console.log(allEmails);
-     console.log(allUsernames);
+     //console.log(allEmails);
+     //console.log(allUsernames);
      if(allEmails.length > 0){
        console.log('Email in use');
        db.close();
@@ -103,7 +103,7 @@ module.exports = {
      var users = dbo.collection("users");
      var existingUser = users.find({email: email});
      const allUsers = await existingUser.toArray();
-     console.log(allUsers);
+     //console.log(allUsers);
      if (allUsers.length > 0) {
        passwordEncrypt.decrypt(password, allUsers[0].password, function(result){
          if (result){
@@ -135,7 +135,7 @@ module.exports = {
    });
  },
  addToUser: function(myobj, req){
-   console.log(req.session.user);
+   //console.log(req.session.user);
    MongoClient.connect(uri, async function(err, db){
      if(err) throw err;
      var dbo = db.db(dbname);
@@ -147,7 +147,7 @@ module.exports = {
      var currCookbook = currentUser.cookbook;
      currCookbook.push(myobj);
      currentUser.cookbook = currCookbook;
-     console.log(currentUser);
+     //console.log(currentUser);
      users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currCookbook, clicks_index:currentUser.clicks_index, clicks_alt: currentUser.clicks_alt, role: currentUser.role});
      //users.findAndModify({query: {_id: req.session.user }, update: {cookbook: }});
      console.log("Added recipe to cookbook");
@@ -182,7 +182,7 @@ module.exports = {
         currCounter++;
         users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currentUser.cookbook, clicks_index:currentUser.clicks_index, clicks_alt: currCounter, role: currentUser.role});
      }
-     console.log(currCounter);
+    // console.log(currCounter);
      //users.findAndModify({query: {_id: req.session.user }, update: {cookbook: }});
      console.log("Counter Incremented");
    });

@@ -5,9 +5,9 @@ const saltRounds = 10;
 
 module.exports = {
   encrypt: function(username, email, password, res){
-    console.log(password);
+    //console.log(password);
     bcrypt.hash(password, saltRounds, function(err, hash) {
-      console.log(hash);
+      //console.log(hash);
       // Store hash in your password DB.
       //mongoManager here to fix heroku
       const mongoManager = require('./mongoManager.js');

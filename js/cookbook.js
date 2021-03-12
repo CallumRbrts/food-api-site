@@ -4,7 +4,7 @@ document.getElementById("cookbookButton").onclick = function(e){
 
       var recipe_name = e.target.parentNode.firstChild.innerHTML
 
-      console.log(recipe_name);
+      //console.log(recipe_name);
 
       MongoClient.connect(uri, async function(err, db){
         if(err) throw err;
@@ -12,7 +12,7 @@ document.getElementById("cookbookButton").onclick = function(e){
         var users = dbo.collection("cookbook");
         var elem = dbo.collection("cookbook").find({ name: elem });
         var elem_array = await elem.toArray();
-        console.log(elem_array);
+        //console.log(elem_array);
         if(elem_array.length>0){
           console.log("Recipe Found");
           dbo.collection("cookbook").insertOne(elem_array[0],function(err, res) {

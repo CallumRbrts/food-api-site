@@ -105,7 +105,7 @@ app.route('/')
   })
   .post(function(req,res){
     var recipe_name = req.body.recipe
-    console.log(recipe_name);
+    //console.log(recipe_name);
 
     if(recipe_name == 'refresh'){
       mongoManager.emptyCollection("dailyRecipes");
@@ -208,7 +208,7 @@ basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
 
 basicRouter.post('/cookbook',[jwtAuth.verifyToken], function(req, res){
   var recipe_name = req.body.recipe
-  console.log(recipe_name);
+  //console.log(recipe_name);
   if(recipe_name == "delete"){
     mongoManager.deleteUser(req);
     res.status(202).send();
@@ -353,7 +353,7 @@ app.route('/altIndex')
   })
   .post(function(req,res){
     var recipe_name = req.body.recipe;
-    console.log(recipe_name);
+    //console.log(recipe_name);
     if(recipe_name == 'refresh'){
       mongoManager.emptyCollection("dailyRecipes");
       api.getRandomRecipes(6, res);

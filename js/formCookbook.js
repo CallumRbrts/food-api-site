@@ -13,7 +13,7 @@ req.onreadystatechange = function() {
   var txt = "";
   if (this.readyState == 4 && this.status == 200) {
     var response = this.responseText;
-    console.log(response);
+    //console.log(response);
     document.getElementById("answer").innerHTML = response;
   }
   if(this.status == 202){
@@ -29,7 +29,7 @@ refreshButton.onclick = function(e){
   req.open('POST', "/cookbook?", true);
   req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
   req.send(params);
-  console.log(params);
+  //console.log(params);
 }
 
 var allButtons = document.getElementsByClassName('cookbook');
