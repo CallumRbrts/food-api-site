@@ -20,6 +20,10 @@ req.onreadystatechange = function() {
     //wait for db change to be made
     setTimeout(() => {  window.location.reload(); }, 1000);
   }
+  if(this.status == 400){
+    console.log("Invalid Login Details");
+    document.getElementById("error").innerHTML = "Invalid Login Details";
+  }
 };
 
 //This button shouldn't exist normally as it would constantly change the DB for each user that clicks on it, it is mearly for testing purposes

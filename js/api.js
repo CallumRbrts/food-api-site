@@ -18,11 +18,8 @@ module.exports = {
 
     request.end(async function(res) {
        if (res.error) throw new Error(res.error);
-       //console.log(res.body.recipes);
-
        for (var y = 0; y < res.body.recipes.length; ++y){
          var recipe = res.body.recipes[y];
-
          if(!("image" in recipe)){
            new_images = await client.search(recipe.title, options)
                .catch(error => console.log(error));
@@ -51,7 +48,6 @@ module.exports = {
 
     request.end(function(res) {
       console.log(res.body);
-      //console.log(res.body.results[0].analyzedInstructions);
       var recipe = res.body.results[0];
       mongoManager.getUserFromDB(req.session.user, function(user){
         var userCookbook = user.cookbook;
@@ -68,15 +64,6 @@ module.exports = {
           mongoManager.addToUser(recipe, req)
         }
       });
-      // mongoManager.searchDB("users", req.session.user, function(bool){
-      //   if (bool) {
-      //     console.log("Elem exists in collection");
-      //   } else {
-      //     console.log("Elem doesn't exist in collection");
-      //     //mongoManager.addToDB("cookbook", recipe);
-      //     mongoManager.addToUser(recipe, req)
-      //   }
-      // });
     });
   }
 }

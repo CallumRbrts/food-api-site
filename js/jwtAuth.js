@@ -3,13 +3,10 @@ var {user,password,dname,secretKey} = require("../config.json");
 
 module.exports = {
   verifyToken: function(req, res, next){
-    //let token = req.cookies["x-access-token"];
     let session_token = req.session.x_access_token;
-  //  console.log(token);
     console.log(session_token);
     if (!session_token) {
       console.log("No Session Token");
-      //res.status(403).send({ message: "No token provided!" });
       return res.redirect('/');
     }
 
@@ -19,8 +16,6 @@ module.exports = {
     }
     req.userId = decoded.id;
     next();
-    //res.sendFile(__dirname+'/cookbook.html')
-
   });
 },
   createToken: function(user){

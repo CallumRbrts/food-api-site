@@ -30,7 +30,6 @@ refreshButton.onclick = function(e){
   req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
   req.send(params);
   console.log(params);
-  //window.location.reload();
 }
 
 var allButtons = document.getElementsByClassName('cookbook');
@@ -43,9 +42,6 @@ for(var i = 0; i < allButtons.length; i++){
     e.target.classList.add("btn-outline-danger");
     e.target.classList.add("disabled");
 
-    // req.open("GET", "/register?username=" + username + "&email=" + email + "&password=" + password, true);
-    // req.send();
-    //console.log(recipe_name);
     var params = 'recipe=' + recipe_name;
     req.open('POST', "/cookbook?", true);
     req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');

@@ -1,12 +1,12 @@
 var express = require('express');
 const flash = require('connect-flash');
 const cookieParser = require('cookie-parser');
-//var unirest = require("unirest");
 var app = express();
 var {user, password, dbname, secretKey, apiKey, searchAPIkey} = require('./config.json');
 const mongoManager = require('./js/mongoManager.js');
 const passwordEncrypt = require('./js/passwordEncrypt.js');
 const expressValidator = require('express-validator');
+//const passwordStrength = require('check-password-strength')
 var session = require('express-session');
 const schedule = require('node-schedule');
 const jwtAuth = require('./js/jwtAuth.js');
@@ -25,8 +25,6 @@ var j = schedule.scheduleJob({hour: 00, minute: 00}, async function(res){
 });
 
 
-//app.use(__dirname+'/css', express.static('public'))
-
 //Use to load static files like css
 app.use(express.static(__dirname));
 app.use(cookieParser());
@@ -41,18 +39,10 @@ app.use(session({ //ask about position of this
 app.use(flash());
 app.set('view engine', 'ejs');
 
-
-
-//app.use(express.json())
 //since the content type of our form is set to x-www-form-urlencoded we need to add this
 app.use(express.urlencoded({
   extended: true
 }));
-
-
-// app.get('/', function(req, res){
-//   res.render(__dirname+'/index.html');
-// });
 
 app.route('/')
   .get(function (req,res){
@@ -112,8 +102,6 @@ app.route('/')
       });
 
     });
-    //console.log(recipes);
-    //const tagline = '<div class="col-md-6 col-lg-4 mb-5"><div class="portfolio-item mx-auto" data-toggle="modal" data-target="#portfolioModal1"><div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100"><div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div></div><img class="img-fluid" src="assets/img/portfolio/cabin.png" alt="" /></div></div>';
   })
   .post(function(req,res){
     var recipe_name = req.body.recipe
@@ -175,7 +163,6 @@ basicRouter.use(function(req,res,next){
 
 adminRouter.param('name', function(req,res,next,name){
   console.log("validating my little pogchamp's name");
-
   req.params.name = name.charAt(0).toUpperCase() + name.slice(1);
   next();
 });
@@ -186,11 +173,9 @@ basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
   var loginButton = '<li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/logout">Logout</a></li>'
 
   mongoManager.getUserFromDB(req.session.user, function(result){
-    console.log(result);
     var indexCounter = result.clicks_index;
     var altCounter = result.clicks_alt;
     result = result.cookbook;
-  //  console.log(result);
     var recipes = [];
     for (let i = 0; i < result.length; ++i){
       var ingredients = "";
@@ -208,7 +193,6 @@ basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
       } catch (e) {
         var instructions = "none provided";
       }
-      //var tagline = '<div class="col-md-6 col-lg-4 mb-5"><div class="portfolio-item mx-auto" data-toggle="modal" data-target="#portfolioModal'+i+'"><div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100"><div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div></div><img class="img-fluid" src="'+result[i].image+'" alt="" /></div></div>';
       var card ='<div class="portfolio-modal modal fade" id="portfolioModal'+i+'" tabindex="-1" role="dialog" aria-labelledby="portfolioModal1Label" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fas fa-times"></i></span></button><div class="modal-body text-center"><div class="container"><div class="row justify-content-center"><div class="col-lg-8"><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">'+result[i].title+'</h2><div class="divider-custom"><div class="divider-custom-line"></div><div class="divider-custom-icon"><i class="fas fa-star"></i></div><div class="divider-custom-line"></div></div><img class="img-fluid rounded mb-5" src="'+result[i].image+'" alt="" /><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Ingredients</h2><p class="mb-5"><ul>'+ingredients+'</ul></p></br><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Instructions</h2></br><p style="text-align: center;" class="mb-5"><ol>'+instructions+'</ol></p><button id="cookbookButton" class="btn btn-primary cookbook"><i class="fas fa-times fa-fw"></i>Add to Cookbook</button></div></div></div></div></div></div></div>';
       var tagline = '<div class="card mb-3"><div class="card-body"><h5 class="card-title">'+result[i].title+'</h5><div class="float-container"><div class="float-child"><ul>'+ingredients+'</ul></div><div class="float-child"><img class="img" src="'+result[i].image+'" alt="" /></div></div></br><button id="cookbookButton" class="btn btn-danger cookbook"><i class="fas fa-times fa-fw"></i>Remove from Cookbook</button></div></div>';
       recipes.push([tagline, card]);
@@ -220,19 +204,15 @@ basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
       loginButton: loginButton
     });
   });
-//  res.render(__dirname+'/cookbook.ejs');
 });
+
 basicRouter.post('/cookbook',[jwtAuth.verifyToken], function(req, res){
   var recipe_name = req.body.recipe
   console.log(recipe_name);
   if(recipe_name == "delete"){
     mongoManager.deleteUser(req);
-    // req.session.user = "";
-    // req.session.login = false;
-    // req.session.x_access_token = "";
-    // req.session.special = false;
     res.status(202).send();
-    //res.redirect('/');
+
   }else{
     mongoManager.getUserFromDB(req.session.user, function(user){
       var userCookbook = user.cookbook;
@@ -284,7 +264,7 @@ app.route('/login')
         res.redirect('/cookbook');
       }else{
         console.log("Invalid Login Details");
-        //res.status(400).send({ message: "Invalid Login Details" });
+        res.status(403).send({ message: "Invalid Login Details" });
       }
     });
 });
@@ -304,17 +284,12 @@ app.route('/register')
    })
    .post(function(req,res){
      var username = req.body.username;
-     var email =  req.body.email;//another possibility req.params['email']
+     var email =  req.body.email;
      var password = req.body.password;
+     // var strength = passwordStrength(password);
+     // console.log(strength);
      passwordEncrypt.encrypt(username, email, password, res);
    });
-
-// function addToDB(dbo, myobj, collection) {
-//     dbo.collection(collection).insertOne(myobj, function(err, res) {
-//       if (err) throw err;
-//       console.log("1 user inserted");
-//     });
-// }
 
 app.route('/altIndex')
   .get(function (req,res){
@@ -366,7 +341,6 @@ app.route('/altIndex')
           var card ='<div class="portfolio-modal modal fade" id="portfolioModal'+i+'" tabindex="-1" role="dialog" aria-labelledby="portfolioModal1Label" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fas fa-times"></i></span></button><div class="modal-body text-center"><div class="container"><div class="row justify-content-center"><div class="col-lg-8"><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">'+result[i].title+'</h2><div class="divider-custom"><div class="divider-custom-line"></div><div class="divider-custom-icon"><i class="fas fa-star"></i></div><div class="divider-custom-line"></div></div><img class="img-fluid rounded mb-5" src="'+result[i].image+'" alt="" /><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Ingredients</h2><p class="mb-5"><ul>'+ingredients+'</ul></p></br><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Instructions</h2></br><p style="text-align: center;" class="mb-5"><ol>'+instructions+'</ol></p><button id="cookbookButton" class="btn btn-primary cookbook"><i class="fas fa-times fa-fw"></i>Add to Cookbook</button></div></div></div></div></div></div></div>';
           var tagline = '<div class="card mb-3"><div class="card-body"><h5 class="card-title">'+result[i].title+'</h5><div class="float-container"><div class="float-child"><ul>'+ingredients+'</ul></div><div class="float-child"><img class="img" src="'+result[i].image+'" alt="" /></div></div></br></div></div>';
         }
-        //var tagline = '<div class="col-md-6 col-lg-4 mb-5"><div class="portfolio-item mx-auto" data-toggle="modal" data-target="#portfolioModal'+i+'"><div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100"><div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div></div><img class="img-fluid" src="'+result[i].image+'" alt="" /></div></div>';
         recipes.push([tagline, card]);
       }
       res.render(__dirname+'/altIndex.ejs',{
@@ -376,13 +350,10 @@ app.route('/altIndex')
       });
 
     });
-    //console.log(recipes);
-    //const tagline = '<div class="col-md-6 col-lg-4 mb-5"><div class="portfolio-item mx-auto" data-toggle="modal" data-target="#portfolioModal1"><div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100"><div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div></div><img class="img-fluid" src="assets/img/portfolio/cabin.png" alt="" /></div></div>';
   })
   .post(function(req,res){
     var recipe_name = req.body.recipe;
     console.log(recipe_name);
-  //  mongoManager.incrementClick(req, "page_clicks_alt");
     if(recipe_name == 'refresh'){
       mongoManager.emptyCollection("dailyRecipes");
       api.getRandomRecipes(6, res);
@@ -390,7 +361,6 @@ app.route('/altIndex')
     }else{
       api.complexSearch(recipe_name, res, req);
     }
-
     mongoManager.incrementClick(req, "page_clicks_alt");
 
       // let url = "https://api.spoonacular.com/recipes/random";

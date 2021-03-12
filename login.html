@@ -26,6 +26,10 @@
           console.log (response);
          document.getElementById("answer").innerHTML = response;
         }
+        if(this.status == 400){
+          console.log("Invalid Login Details");
+          document.getElementById("error").innerHTML = "Invalid Login Details";
+        }
       };
     }
       function doStuff() {
@@ -55,6 +59,7 @@
           <i class="fas fa-pencil-alt"></i>
           <h2>Login here</h2>
         </div>
+
         <div class="info">
           <input id="email" type="text" name="email" placeholder="Email">
           <input id="password" type="password" name="password" placeholder="Password">
