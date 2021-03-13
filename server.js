@@ -117,6 +117,27 @@ app.route('/')
       //a recipe to their cookbook at midnight when the new daily recipes are generated
       //this is because I delete the collection at the end of every day
       api.complexSearch(recipe_name, res, req);
+      mongoManager.getFromDB("cookbook", function(results){
+        for(let n = 0; n<results.length; n++){
+          if(results[n].name == recipe_name){
+            var adds = results[n].clicks;
+            adds++;
+            MongoClient.connect(uri, async function(err, db){
+              if(err) throw err;
+              var dbo = db.db(dbname);
+              var users = dbo.collection("cookbook");
+              users.replaceOne({name: recipe_name}, {name: recipe_name, clicks: adds});
+            });
+          }else{
+            let obj = {name: recipe_name, clicks: 1};
+            mongoManager.addToDB("cookbook", obj);
+          }
+        }
+        if(results.length == 0){
+          let obj = {name: recipe_name, clicks: 1};
+          mongoManager.addToDB("cookbook", obj);
+        }
+      });
     }
 
     mongoManager.incrementClick(req, "page_clicks_index");
@@ -176,33 +197,50 @@ basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
     var indexCounter = result.clicks_index;
     var altCounter = result.clicks_alt;
     result = result.cookbook;
-    var recipes = [];
-    for (let i = 0; i < result.length; ++i){
-      var ingredients = "";
-      for(let j= 0; j < result[i].nutrition.ingredients.length; ++j){
-        var metric = result[i].nutrition.ingredients[j];
-        var ingredient = '<li>'+ metric.amount + " " + metric.unit + " " + metric.name + '</li>';
-        ingredients += ingredient;
-      }
-      var instructions = "";
-      try {
-        for (let k = 0; k < result[i].analyzedInstructions[0]['steps'].length; ++k) {
-          var instruction = '<li>' + result[i].analyzedInstructions[0]['steps'][k]['step'] + '</li>';
-          instructions += instruction;
+    mongoManager.getFromDB("cookbook", function(cookbookResults){
+      for (let n = 0; n < cookbookResults.length; ++n){
+        for (let i =0; i<result.length; ++i ){
+          if(cookbookResults[n].name == result[i].title){
+            result[i].clicks = cookbookResults[n].clicks;
+            break;
+          }
         }
-      } catch (e) {
-        var instructions = "none provided";
       }
-      var card ='<div class="portfolio-modal modal fade" id="portfolioModal'+i+'" tabindex="-1" role="dialog" aria-labelledby="portfolioModal1Label" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fas fa-times"></i></span></button><div class="modal-body text-center"><div class="container"><div class="row justify-content-center"><div class="col-lg-8"><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">'+result[i].title+'</h2><div class="divider-custom"><div class="divider-custom-line"></div><div class="divider-custom-icon"><i class="fas fa-star"></i></div><div class="divider-custom-line"></div></div><img class="img-fluid rounded mb-5" src="'+result[i].image+'" alt="" /><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Ingredients</h2><p class="mb-5"><ul>'+ingredients+'</ul></p></br><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Instructions</h2></br><p style="text-align: center;" class="mb-5"><ol>'+instructions+'</ol></p><button id="cookbookButton" class="btn btn-primary cookbook"><i class="fas fa-times fa-fw"></i>Add to Cookbook</button></div></div></div></div></div></div></div>';
-      var tagline = '<div class="card mb-3"><div class="card-body"><h5 class="card-title">'+result[i].title+'</h5><div class="float-container"><div class="float-child"><ul>'+ingredients+'</ul></div><div class="float-child"><img class="img" src="'+result[i].image+'" alt="" /></div></div></br><button id="cookbookButton" class="btn btn-danger cookbook"><i class="fas fa-times fa-fw"></i>Remove from Cookbook</button></div></div>';
-      recipes.push([tagline, card]);
-    }
-    res.render(__dirname+'/cookbook.ejs',{
-      recipes: recipes,
-      clicks_index: indexCounter,
-      clicks_alt: altCounter,
-      loginButton: loginButton
+      for(let i = 0; i < result.length; ++i){
+        if(result[i].clicks == undefined){
+          result[i].clicks = 0;
+        }
+        var recipes = [];
+        for (let i = 0; i < result.length; ++i){
+          var ingredients = "";
+          for(let j= 0; j < result[i].nutrition.ingredients.length; ++j){
+            var metric = result[i].nutrition.ingredients[j];
+            var ingredient = '<li>'+ metric.amount + " " + metric.unit + " " + metric.name + '</li>';
+            ingredients += ingredient;
+          }
+          var instructions = "";
+          try {
+            for (let k = 0; k < result[i].analyzedInstructions[0]['steps'].length; ++k) {
+              var instruction = '<li>' + result[i].analyzedInstructions[0]['steps'][k]['step'] + '</li>';
+              instructions += instruction;
+            }
+          } catch (e) {
+            var instructions = "none provided";
+          }
+          var card ='<div class="portfolio-modal modal fade" id="portfolioModal'+i+'" tabindex="-1" role="dialog" aria-labelledby="portfolioModal1Label" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fas fa-times"></i></span></button><div class="modal-body text-center"><div class="container"><div class="row justify-content-center"><div class="col-lg-8"><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">'+result[i].title+'</h2><div class="divider-custom"><div class="divider-custom-line"></div><div class="divider-custom-icon"><i class="fas fa-star"></i></div><div class="divider-custom-line"></div></div><img class="img-fluid rounded mb-5" src="'+result[i].image+'" alt="" /><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Ingredients</h2><p class="mb-5"><ul>'+ingredients+'</ul></p></br><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Instructions</h2></br><p style="text-align: center;" class="mb-5"><ol>'+instructions+'</ol></p><button id="cookbookButton" class="btn btn-primary cookbook"><i class="fas fa-times fa-fw"></i>Add to Cookbook</button></div></div></div></div></div></div></div>';
+          var tagline = '<div class="card mb-3"><div class="card-body"><h5 class="card-title">'+result[i].title+'</h5><div class="float-container"><div class="float-child"><ul>'+ingredients+'</ul></div><div class="float-child">Added to '+result[i].clicks+' cookbook(s) </div><div class="float-child"><img class="img" src="'+result[i].image+'" alt="" /></div></div></br><button id="cookbookButton" class="btn btn-danger cookbook"><i class="fas fa-times fa-fw"></i>Remove from Cookbook</button></div></div>';
+          recipes.push([tagline, card]);
+        }
+      }
+      res.render(__dirname+'/cookbook.ejs',{
+        recipes: recipes,
+        clicks_index: indexCounter,
+        clicks_alt: altCounter,
+        loginButton: loginButton
+      });
+
     });
+
   });
 });
 
@@ -360,6 +398,27 @@ app.route('/altIndex')
       res.status(202).send();
     }else{
       api.complexSearch(recipe_name, res, req);
+      mongoManager.getFromDB("cookbook", function(results){
+        for(let n = 0; n<results.length; n++){
+          if(results[n].name == recipe_name){
+            var adds = results[n].clicks;
+            adds++;
+            MongoClient.connect(uri, async function(err, db){
+              if(err) throw err;
+              var dbo = db.db(dbname);
+              var users = dbo.collection("cookbook");
+              users.replaceOne({name: recipe_name}, {name: recipe_name, clicks: adds});
+            });
+          }else{
+            let obj = {name: recipe_name, clicks: 1};
+            mongoManager.addToDB("cookbook", obj);
+          }
+        }
+        if(results.length == 0){
+          let obj = {name: recipe_name, clicks: 1};
+          mongoManager.addToDB("cookbook", obj);
+        }
+      });
     }
     mongoManager.incrementClick(req, "page_clicks_alt");
 
