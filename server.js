@@ -70,6 +70,12 @@ app.route('/')
     //result of get is return through a callback, so I need to do the dynamic html in the callback (variable can't be passed up due to async)
     mongoManager.getFromDB("dailyRecipes", function(result){
       var recipes = [];
+      // console.log("yeet");
+      // console.log("yeet");
+      //
+      //
+      // console.log(result.length);
+      // console.log(result);
       for (let i = 0; i < result.length; ++i){
         var ingredients = "";
         for(let j= 0; j < result[i].extendedIngredients.length; ++j){
@@ -95,6 +101,7 @@ app.route('/')
         }
         recipes.push([tagline, card]);
       }
+
       res.render(__dirname+'/index.ejs',{
         recipes: recipes,
         loginButton: loginButton,
@@ -118,8 +125,10 @@ app.route('/')
       //this is because I delete the collection at the end of every day
       api.complexSearch(recipe_name, res, req);
       mongoManager.getFromDB("cookbook", function(results){
+        var toAdd = true;
         for(let n = 0; n<results.length; n++){
           if(results[n].name == recipe_name){
+            console.log(recipe_name);
             var adds = results[n].clicks;
             adds++;
             MongoClient.connect(uri, async function(err, db){
@@ -127,12 +136,16 @@ app.route('/')
               var dbo = db.db(dbname);
               var users = dbo.collection("cookbook");
               users.replaceOne({name: recipe_name}, {name: recipe_name, clicks: adds});
+              db.close();
             });
-          }else{
-            let obj = {name: recipe_name, clicks: 1};
-            mongoManager.addToDB("cookbook", obj);
+            toAdd = false;
           }
         }
+        if(toAdd){
+          let obj = {name: recipe_name, clicks: 1};
+          mongoManager.addToDB("cookbook", obj);
+        }
+        console.log(results.length);
         if(results.length == 0){
           let obj = {name: recipe_name, clicks: 1};
           mongoManager.addToDB("cookbook", obj);
@@ -198,6 +211,7 @@ basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
     var altCounter = result.clicks_alt;
     result = result.cookbook;
     mongoManager.getFromDB("cookbook", function(cookbookResults){
+      var recipes = [];
       for (let n = 0; n < cookbookResults.length; ++n){
         for (let i =0; i<result.length; ++i ){
           if(cookbookResults[n].name == result[i].title){
@@ -206,31 +220,32 @@ basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
           }
         }
       }
-      for(let i = 0; i < result.length; ++i){
+      for (let i = 0; i < result.length; ++i){
         if(result[i].clicks == undefined){
           result[i].clicks = 0;
         }
-        var recipes = [];
-        for (let i = 0; i < result.length; ++i){
-          var ingredients = "";
-          for(let j= 0; j < result[i].nutrition.ingredients.length; ++j){
-            var metric = result[i].nutrition.ingredients[j];
-            var ingredient = '<li>'+ metric.amount + " " + metric.unit + " " + metric.name + '</li>';
-            ingredients += ingredient;
-          }
-          var instructions = "";
-          try {
-            for (let k = 0; k < result[i].analyzedInstructions[0]['steps'].length; ++k) {
-              var instruction = '<li>' + result[i].analyzedInstructions[0]['steps'][k]['step'] + '</li>';
-              instructions += instruction;
-            }
-          } catch (e) {
-            var instructions = "none provided";
-          }
-          var card ='<div class="portfolio-modal modal fade" id="portfolioModal'+i+'" tabindex="-1" role="dialog" aria-labelledby="portfolioModal1Label" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fas fa-times"></i></span></button><div class="modal-body text-center"><div class="container"><div class="row justify-content-center"><div class="col-lg-8"><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">'+result[i].title+'</h2><div class="divider-custom"><div class="divider-custom-line"></div><div class="divider-custom-icon"><i class="fas fa-star"></i></div><div class="divider-custom-line"></div></div><img class="img-fluid rounded mb-5" src="'+result[i].image+'" alt="" /><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Ingredients</h2><p class="mb-5"><ul>'+ingredients+'</ul></p></br><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Instructions</h2></br><p style="text-align: center;" class="mb-5"><ol>'+instructions+'</ol></p><button id="cookbookButton" class="btn btn-primary cookbook"><i class="fas fa-times fa-fw"></i>Add to Cookbook</button></div></div></div></div></div></div></div>';
-          var tagline = '<div class="card mb-3"><div class="card-body"><h5 class="card-title">'+result[i].title+'</h5><div class="float-container"><div class="float-child"><ul>'+ingredients+'</ul></div><div class="float-child">Added to '+result[i].clicks+' cookbook(s) </div><div class="float-child"><img class="img" src="'+result[i].image+'" alt="" /></div></div></br><button id="cookbookButton" class="btn btn-danger cookbook"><i class="fas fa-times fa-fw"></i>Remove from Cookbook</button></div></div>';
-          recipes.push([tagline, card]);
+        var ingredients = "";
+        for(let j= 0; j < result[i].nutrition.ingredients.length; ++j){
+          var metric = result[i].nutrition.ingredients[j];
+          var ingredient = '<li>'+ metric.amount + " " + metric.unit + " " + metric.name + '</li>';
+          ingredients += ingredient;
         }
+        var instructions = "";
+        try {
+          for (let k = 0; k < result[i].analyzedInstructions[0]['steps'].length; ++k) {
+            var instruction = '<li>' + result[i].analyzedInstructions[0]['steps'][k]['step'] + '</li>';
+            instructions += instruction;
+          }
+        } catch (e) {
+          var instructions = "none provided";
+        }
+        var card ='<div class="portfolio-modal modal fade" id="portfolioModal'+i+'" tabindex="-1" role="dialog" aria-labelledby="portfolioModal1Label" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fas fa-times"></i></span></button><div class="modal-body text-center"><div class="container"><div class="row justify-content-center"><div class="col-lg-8"><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">'+result[i].title+'</h2><div class="divider-custom"><div class="divider-custom-line"></div><div class="divider-custom-icon"><i class="fas fa-star"></i></div><div class="divider-custom-line"></div></div><img class="img-fluid rounded mb-5" src="'+result[i].image+'" alt="" /><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Ingredients</h2><p class="mb-5"><ul>'+ingredients+'</ul></p></br><h2 class="portfolio-modal-title text-secondary text-uppercase mb-0" id="portfolioModal1Label">Instructions</h2></br><p style="text-align: center;" class="mb-5"><ol>'+instructions+'</ol></p><button id="cookbookButton" class="btn btn-primary cookbook"><i class="fas fa-times fa-fw"></i>Add to Cookbook</button></div></div></div></div></div></div></div>';
+        var tagline = '<div class="card mb-3"><div class="card-body"><h5 class="card-title">'+result[i].title+'</h5><div class="float-container"><div class="float-child"><ul>'+ingredients+'</ul></div><div class="float-child">Added to '+result[i].clicks+' cookbook(s) </div><div class="float-child"><img class="img" src="'+result[i].image+'" alt="" /></div></div></br><button id="cookbookButton" class="btn btn-danger cookbook"><i class="fas fa-times fa-fw"></i>Remove from Cookbook</button></div></div>';
+        recipes.push([tagline, card]);
+      }
+
+      if(result.length == 0){
+        recipes.push(['<div class="card mb-3"><div class="card-body"><h5 class="card-title">No Recipes Added</h5></div></div>',"none"])
       }
       res.render(__dirname+'/cookbook.ejs',{
         recipes: recipes,
@@ -248,6 +263,7 @@ basicRouter.post('/cookbook',[jwtAuth.verifyToken], function(req, res){
   var recipe_name = req.body.recipe
   //console.log(recipe_name);
   if(recipe_name == "delete"){
+
     mongoManager.deleteUser(req);
     res.status(202).send();
 
@@ -399,8 +415,10 @@ app.route('/altIndex')
     }else{
       api.complexSearch(recipe_name, res, req);
       mongoManager.getFromDB("cookbook", function(results){
+        var toAdd = true;
         for(let n = 0; n<results.length; n++){
           if(results[n].name == recipe_name){
+            console.log(recipe_name);
             var adds = results[n].clicks;
             adds++;
             MongoClient.connect(uri, async function(err, db){
@@ -408,13 +426,18 @@ app.route('/altIndex')
               var dbo = db.db(dbname);
               var users = dbo.collection("cookbook");
               users.replaceOne({name: recipe_name}, {name: recipe_name, clicks: adds});
+              db.close();
             });
-          }else{
-            let obj = {name: recipe_name, clicks: 1};
-            mongoManager.addToDB("cookbook", obj);
+            toAdd = false;
           }
         }
+        if(toAdd){
+          let obj = {name: recipe_name, clicks: 1};
+          mongoManager.addToDB("cookbook", obj);
+        }
+        console.log(results.length);
         if(results.length == 0){
+
           let obj = {name: recipe_name, clicks: 1};
           mongoManager.addToDB("cookbook", obj);
         }
