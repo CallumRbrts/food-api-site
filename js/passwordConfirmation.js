@@ -1,4 +1,4 @@
-
+//checks if users password and password confirmation match
 function passwordMatch(){
   $('#password, #confirm_password').on('keyup', function () {
     if ($('#password').val() == $('#confirm_password').val()) {
@@ -17,6 +17,7 @@ $('#password').keyup(function () {
         $('#strengthMessage').html(checkStrength($('#password').val()))
     });
 
+//function that checks strength of password and applies css
 function checkStrength(password) {
   var strength = 0
   if (password.length < 6) {
@@ -48,15 +49,11 @@ function checkStrength(password) {
     $('#strengthMessage').removeClass()
     $('#strengthMessage').addClass('Good')
     passwordMatch()
-  //  $('#submit').attr("disabled", false);
-  //  $('button').css('background', '#1DB954');
     return 'Good'
   } else {
     $('#strengthMessage').removeClass()
     $('#strengthMessage').addClass('Strong')
     passwordMatch()
-  //  $('#submit').attr("disabled", false);
-  //  $('button').css('background', '#1DB954');
     return 'Strong'
     }
   }

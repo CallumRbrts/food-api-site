@@ -33,6 +33,7 @@
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="#daily">Daily Recipes</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/cookbook">Cookbook</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/">Original Page</a></li>
+                        <!-- EJS render variable -->
                         <%- loginButton %>
                     </ul>
                 </div>
@@ -68,18 +69,20 @@
                 <div class="row justify-content-center">
                     <!-- Portfolio Item 1-->
                   <div class="show-recipe">
+                    <!-- EJS render variable -->
                     <% recipes.forEach(function(recipe) { %>
                     <%- recipe[0] %>
                     <% }); %>
                   </div>
                 </div>
+                <!-- EJS render variable -->
                 <%- refreshButton %>
             </div>
         </section>
 
         <!-- Copyright Section-->
         <div class="copyright py-4 text-center text-white">
-            <div class="container"><small>Copyright © Your Website 2020</small></div>
+            <div class="container"><small></small></div>
         </div>
         <!-- Scroll to Top Button (Only visible on small and extra-small screen sizes)-->
         <div class="scroll-to-top d-lg-none position-fixed">

@@ -6,6 +6,7 @@ const jwtAuth = require('./jwtAuth.js');
 const passwordEncrypt = require('./passwordEncrypt.js');
 
 module.exports = {
+  //adds json object to a collection
   addToDB: function(collection, myobj){
     MongoClient.connect(uri, async function(err,db){
       if(err) throw err;
@@ -23,6 +24,7 @@ module.exports = {
       db.close();
     });
   },
+  //deletes all elements in a collection
   emptyCollection: function(collection){
     MongoClient.connect(uri, function(err, db){
       if(err) throw err;
@@ -34,6 +36,7 @@ module.exports = {
       db.close();
     });
   },
+  //returns all elements from a collection in a callback
   getFromDB: async function(collection, callback){
     MongoClient.connect(uri, async function(err, db){
       if(err) throw err;
@@ -46,12 +49,12 @@ module.exports = {
       return callback(elem_array);
     });
   },
+  //checks if elem exists in collection
   searchDB: function(collection, id, callback){
     MongoClient.connect(uri, async function(err, db){
       if(err) throw err;
       var dbo = db.db(dbname);
       var elem = await dbo.collection(collection).findOne({id: id}) //await?
-      //console.log(elem);
       db.close();
       if (elem == null) {
         return callback(false);
@@ -60,6 +63,7 @@ module.exports = {
       }
     });
   },
+  //add a user to the db
   addUser: function(username, email, password, callback){
     MongoClient.connect(uri, async function(err, db){
      if(err) throw err;
@@ -69,19 +73,15 @@ module.exports = {
      var existingEmail = users.find({ email: email });
      const allEmails = await existingEmail.toArray();
      const allUsernames = await existingUsername.toArray();
-     //console.log(allEmails);
-     //console.log(allUsernames);
+     //checks if user already exists
      if(allEmails.length > 0){
        console.log('Email in use');
        db.close();
        return callback("Failed! Email is already in use!");
-       //res.status(400).send({ message: "Failed! Email is already in use!" });
-       //res.redirect('/register');
 
      } else if (allUsernames.length > 0) {
        console.log('Username already taken');
        db.close();
-      // res.status(400).send({ message: "Failed! Username is already in use!" });
        return callback("Failed! Username is already in use!");
      } else {
        console.log("User Doesn't Exist");
@@ -96,63 +96,53 @@ module.exports = {
      }
    });
  },
+ //checks users login details
  loginUser: function(email, password, callback){
    MongoClient.connect(uri, async function(err, db){
      if(err) throw err;
      var dbo = db.db(dbname);
      var users = dbo.collection("users");
+     //find email then check password
      var existingUser = users.find({email: email});
      const allUsers = await existingUser.toArray();
-     //console.log(allUsers);
+
      if (allUsers.length > 0) {
+       //decrypt password and compare
        passwordEncrypt.decrypt(password, allUsers[0].password, function(result){
          if (result){
            console.log("Login Successful");
-          // token = jwtAuth.createToken(allUsers[0]);
            db.close();
            return callback(true, allUsers[0]);
-           // console.log({
-           //   id: allUsers[0]._id,
-           //   username: allUsers[0].username,
-           //   email: allUsers[0].email,
-           //   accessToken: token
-           // });
-           // req.session.x_access_token = token;
-           // res.redirect('/cookbook');
          }else{
            console.log('Password Incorrect');
            db.close();
            return callback(false);
-           //res.status(400).send({ message: "Invalid Login Details" });
          }
        });
      }else{
        console.log('Invalid Email');
        db.close();
        return callback(false);
-       //res.status(400).send({ message: "Invalid Login Details" });
      }
    });
  },
+ //adds recipe to users cookbook
  addToUser: function(myobj, req){
-   //console.log(req.session.user);
    MongoClient.connect(uri, async function(err, db){
      if(err) throw err;
      var dbo = db.db(dbname);
      var users = dbo.collection("users");
-     //add if elem exists
      var existingUser = users.find({_id: ObjectId(req.session.user)});
      const allUsers = await existingUser.toArray();
      var currentUser = allUsers[0];
      var currCookbook = currentUser.cookbook;
      currCookbook.push(myobj);
      currentUser.cookbook = currCookbook;
-     //console.log(currentUser);
      users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currCookbook, clicks_index:currentUser.clicks_index, clicks_alt: currentUser.clicks_alt, role: currentUser.role});
-     //users.findAndModify({query: {_id: req.session.user }, update: {cookbook: }});
      console.log("Added recipe to cookbook");
    });
  },
+ //get all user information from the db
  getUserFromDB: function(id, callback){
    MongoClient.connect(uri, async function(err, db){
      if(err) throw err;
@@ -163,16 +153,17 @@ module.exports = {
      callback(user);
    });
  },
+ //add click to users account
  incrementClick: function(req, type){
    MongoClient.connect(uri, async function(err, db){
      if(err) throw err;
      var dbo = db.db(dbname);
      var users = dbo.collection("users");
-     //add if elem exists
      var existingUser = users.find({_id: ObjectId(req.session.user)});
      const allUsers = await existingUser.toArray();
      var currentUser = allUsers[0];
      var currCounter = 0;
+     //checks which page the user clicked on and adds accordingly
      if(type == "page_clicks_index"){
         currCounter = currentUser.clicks_index;
         currCounter++;
@@ -182,11 +173,10 @@ module.exports = {
         currCounter++;
         users.replaceOne({_id: ObjectId(req.session.user)},{username: currentUser.username, email: currentUser.email, password: currentUser.password, cookbook: currentUser.cookbook, clicks_index:currentUser.clicks_index, clicks_alt: currCounter, role: currentUser.role});
      }
-    // console.log(currCounter);
-     //users.findAndModify({query: {_id: req.session.user }, update: {cookbook: }});
      console.log("Counter Incremented");
    });
  },
+ //removes recipe from users cookbook
  removeElem: function(index, req){
    MongoClient.connect(uri, async function(err, db){
      if(err) throw err;
@@ -202,6 +192,7 @@ module.exports = {
      console.log("Removed Recipe");
    });
  },
+ //deletes User information
  deleteUser: function(req){
    MongoClient.connect(uri, async function(err, db){
      if(err) throw err;

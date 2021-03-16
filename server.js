@@ -1,12 +1,10 @@
 var express = require('express');
-const flash = require('connect-flash');
 const cookieParser = require('cookie-parser');
 var app = express();
 var {user, password, dbname, secretKey, apiKey, searchAPIkey} = require('./config.json');
 const mongoManager = require('./js/mongoManager.js');
 const passwordEncrypt = require('./js/passwordEncrypt.js');
 const expressValidator = require('express-validator');
-//const passwordStrength = require('check-password-strength')
 var session = require('express-session');
 const schedule = require('node-schedule');
 const jwtAuth = require('./js/jwtAuth.js');
@@ -16,8 +14,7 @@ const PORT = process.env.PORT || 8000;
 const uri = "mongodb+srv://"+user+":"+password+"@web-entreprise-systems.enfbr.mongodb.net/"+dbname+"?retryWrites=true&w=majority";
 var port = PORT;
 
-
-//check if collected recipe has an image, if not either use a default image or run another recipe with an image
+//scheduled Job that refreshes recipes daily at midnight
 var j = schedule.scheduleJob({hour: 00, minute: 00}, async function(res){
   console.log("Running Scheduled Job");
   await mongoManager.emptyCollection("dailyRecipes");
@@ -36,7 +33,7 @@ app.use(session({ //ask about position of this
   login: false,
   special: false,
 }));
-app.use(flash());
+//declare as ejs
 app.set('view engine', 'ejs');
 
 //since the content type of our form is set to x-www-form-urlencoded we need to add this
@@ -44,6 +41,7 @@ app.use(express.urlencoded({
   extended: true
 }));
 
+//main page
 app.route('/')
   .get(function (req,res){
     if(req.session.page_views){
@@ -56,12 +54,14 @@ app.route('/')
     // respond with the session object
     console.log(req.session);
 
+    //change button if logged in
     if(req.session.login){
       var loginButton = '<li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/logout">Logout</a></li>'
     }else {
       var loginButton = '<li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/login">Login</a></li>'
     }
 
+    //load refresh button if admin user
     if(req.session.special){
       var refreshButton = '<div class="col text-center"><button id="refresh" class="btn btn-primary btn-lg">Refresh Recipes</button></div>';
     }else {
@@ -70,12 +70,7 @@ app.route('/')
     //result of get is return through a callback, so I need to do the dynamic html in the callback (variable can't be passed up due to async)
     mongoManager.getFromDB("dailyRecipes", function(result){
       var recipes = [];
-      // console.log("yeet");
-      // console.log("yeet");
-      //
-      //
-      // console.log(result.length);
-      // console.log(result);
+      //parse results and create html to render
       for (let i = 0; i < result.length; ++i){
         var ingredients = "";
         for(let j= 0; j < result[i].extendedIngredients.length; ++j){
@@ -101,7 +96,7 @@ app.route('/')
         }
         recipes.push([tagline, card]);
       }
-
+      //render ejs
       res.render(__dirname+'/index.ejs',{
         recipes: recipes,
         loginButton: loginButton,
@@ -111,9 +106,8 @@ app.route('/')
     });
   })
   .post(function(req,res){
-    var recipe_name = req.body.recipe
-    //console.log(recipe_name);
-
+    var recipe_name = req.body.recipe;
+    //if clicked on refresh button
     if(recipe_name == 'refresh'){
       mongoManager.emptyCollection("dailyRecipes");
       api.getRandomRecipes(6, res);
@@ -124,6 +118,7 @@ app.route('/')
       //a recipe to their cookbook at midnight when the new daily recipes are generated
       //this is because I delete the collection at the end of every day
       api.complexSearch(recipe_name, res, req);
+      //gets all recipes that have been clicked on and increments the total number of adds to users cookbooks
       mongoManager.getFromDB("cookbook", function(results){
         var toAdd = true;
         for(let n = 0; n<results.length; n++){
@@ -152,32 +147,8 @@ app.route('/')
         }
       });
     }
-
+    //increment click for this page
     mongoManager.incrementClick(req, "page_clicks_index");
-
-    // let url = "https://api.spoonacular.com/recipes/complexSearch"
-    // var request = unirest("GET", url);
-    // request.query({
-    //   "apiKey": apiKey,
-    //   "query": recipe_name,
-    //   "number": 1,
-    //   "addRecipeInformation" : true,
-    //   "addRecipeNutrition": true
-    // });
-    //
-    // request.end(async function(res) {
-    //   console.log(res.body);
-    //   //console.log(res.body.results[0].analyzedInstructions);
-    //   var recipe = res.body.results[0];
-    //   mongoManager.searchDB("cookbook", recipe.id, function(bool){
-    //     if (bool) {
-    //       console.log("Elem exists in collection");
-    //     } else {
-    //       console.log("Elem doesn't exist in collection");
-    //       mongoManager.addToDB("cookbook", recipe);
-    //     }
-    //   });
-    // });
   });
 
 
@@ -195,17 +166,11 @@ basicRouter.use(function(req,res,next){
   next();
 });
 
-adminRouter.param('name', function(req,res,next,name){
-  console.log("validating my little pogchamp's name");
-  req.params.name = name.charAt(0).toUpperCase() + name.slice(1);
-  next();
-});
-
+//checks users token before redirecting to cookbook page
 basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
-  //var token = req.cookies["x-access-token"];
-  //console.log(token);
-  var loginButton = '<li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/logout">Logout</a></li>'
 
+  var loginButton = '<li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/logout">Logout</a></li>'
+  //get users clicks and recipes and renders them
   mongoManager.getUserFromDB(req.session.user, function(result){
     var indexCounter = result.clicks_index;
     var altCounter = result.clicks_alt;
@@ -253,21 +218,19 @@ basicRouter.get('/cookbook',[jwtAuth.verifyToken], function(req, res){
         clicks_alt: altCounter,
         loginButton: loginButton
       });
-
     });
-
   });
 });
 
 basicRouter.post('/cookbook',[jwtAuth.verifyToken], function(req, res){
   var recipe_name = req.body.recipe
-  //console.log(recipe_name);
+  //checks if user wants to delete account
   if(recipe_name == "delete"){
-
     mongoManager.deleteUser(req);
     res.status(202).send();
 
   }else{
+    //remove clicked elem from cookbook
     mongoManager.getUserFromDB(req.session.user, function(user){
       var userCookbook = user.cookbook;
       for(var y = 0; y < userCookbook.length; ++y){
@@ -293,13 +256,12 @@ app.use('/', basicRouter);
 app.route('/login')
   .get(function(req,res){
     res.sendFile(__dirname+'/login.html');
-
-      var output = 'getting the login! ';
 })
   .post(function(req,res){
     console.log('processing');
     var email = req.body.email;
     var password = req.body.password;
+    //checks users details and updates session accordingly
     mongoManager.loginUser(email, password, function(result, user = null){
       if(result){
         token = jwtAuth.createToken(user);
@@ -323,6 +285,7 @@ app.route('/login')
     });
 });
 
+//removes all users session info when loggin out
 app.route('/logout')
   .get(function(req, res){
     req.session.user = "";
@@ -332,6 +295,7 @@ app.route('/logout')
     res.redirect('/');
   });
 
+//register page for users
 app.route('/register')
   .get(function(req,res){
     res.sendFile(__dirname+'/register.html');
@@ -340,11 +304,11 @@ app.route('/register')
      var username = req.body.username;
      var email =  req.body.email;
      var password = req.body.password;
-     // var strength = passwordStrength(password);
-     // console.log(strength);
+     //encrypts password and checks for existing user
      passwordEncrypt.encrypt(username, email, password, res);
    });
 
+//alternative page
 app.route('/altIndex')
   .get(function (req,res){
     if(req.session.page_views){
@@ -360,7 +324,7 @@ app.route('/altIndex')
    }else {
      var loginButton = '<li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/login">Login</a></li>'
    }
-   //probably insecure due to admin being saved in session
+
    if(req.session.special){
      var refreshButton = '<div class="col text-center"><button id="refresh" class="btn btn-primary btn-lg">Refresh Recipes</button></div>';
    }else {
@@ -372,6 +336,7 @@ app.route('/altIndex')
     //result of get is return through a callback, so I need to do the dynamic html in the callback (variable can't be passed up due to async)
     mongoManager.getFromDB("dailyRecipes", function(result){
       var recipes = [];
+      //parses json and creates html to be rendered
       for (let i = 0; i < result.length; ++i){
         var ingredients = "";
         for(let j= 0; j < result[i].extendedIngredients.length; ++j){
@@ -397,6 +362,7 @@ app.route('/altIndex')
         }
         recipes.push([tagline, card]);
       }
+      //render ejs
       res.render(__dirname+'/altIndex.ejs',{
         recipes: recipes,
         loginButton: loginButton,
@@ -407,13 +373,14 @@ app.route('/altIndex')
   })
   .post(function(req,res){
     var recipe_name = req.body.recipe;
-    //console.log(recipe_name);
+    //checks if refresh button was clicked
     if(recipe_name == 'refresh'){
       mongoManager.emptyCollection("dailyRecipes");
       api.getRandomRecipes(6, res);
       res.status(202).send();
     }else{
       api.complexSearch(recipe_name, res, req);
+      //adds clicked recipe to cookbook and checks for duplicates
       mongoManager.getFromDB("cookbook", function(results){
         var toAdd = true;
         for(let n = 0; n<results.length; n++){
@@ -443,36 +410,9 @@ app.route('/altIndex')
         }
       });
     }
+    //increment click for this page
     mongoManager.incrementClick(req, "page_clicks_alt");
-
-      // let url = "https://api.spoonacular.com/recipes/random";
-      // var request = unirest("GET", url);
-      // request.query({
-      //   "apiKey": apiKey,
-      //   "number": 6,
-      //   "includeNutrition": true
-      // });
-      // request.end(async function(res) {
-      //    if (res.error) throw new Error(res.error);
-      //    //console.log(res.body.recipes);
-      //    for (var y = 0; y < res.body.recipes.length; ++y){
-      //      var recipe = res.body.recipes[y];
-      //      if(!("image" in recipe)){
-      //        new_images = await client.search(recipe.title, options)
-      //            .catch(error => console.log(error));
-      //       try{
-      //         recipe.image = new_images[0].url;
-      //       }
-      //       catch(err){
-      //         console.log("image not found");
-      //         recipe.image = "";
-      //       }
-      //     }
-      //   }
-      //    mongoManager.addToDB("dailyRecipes", res.body.recipes)
-      // });
   });
-
 
 app.listen(PORT);
 console.log('Express server running at http://127.0.0.1:'+PORT+'/');
